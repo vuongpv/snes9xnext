@@ -234,8 +234,10 @@ namespace spc
 	static uint32		ratio_denominator = APU_DENOMINATOR_NTSC;
 }
 
+#if defined(USE_8BIT_SOUND) || defined(USE_MONO_SOUND)
 static void EightBitize (uint8 *, int);
 static void DeStereo (uint8 *, int);
+#endif
 static void ReverseStereo (uint8 *, int);
 static void UpdatePlaybackRate (void);
 static void from_apu_to_state (uint8 **, void *, size_t);
@@ -245,6 +247,7 @@ static inline int S9xAPUGetClock (int32);
 static inline int S9xAPUGetClockRemainder (int32);
 
 
+#if defined(USE_8BIT_SOUND) || defined(USE_MONO_SOUND)
 static void EightBitize (uint8 *buffer, int sample_count)
 {
 	uint8	*buf8  = (uint8 *) buffer;
@@ -266,6 +269,7 @@ static void DeStereo (uint8 *buffer, int sample_count)
 		buf[i] = (int16) ((s1 + s2) >> 1);
 	}
 }
+#endif
 
 static void ReverseStereo (uint8 *src_buffer, int sample_count)
 {
@@ -284,6 +288,7 @@ bool8 S9xMixSamples (uint8 *buffer, int sample_count)
 	static int	shrink_buffer_size = -1;
 	uint8		*dest;
 
+#if defined(USE_8BIT_SOUND) || defined(USE_MONO_SOUND)
 	if (!Settings.SixteenBitSound || !Settings.Stereo)
 	{
 		/* We still need both stereo samples for generating the mono sample */
@@ -301,6 +306,7 @@ bool8 S9xMixSamples (uint8 *buffer, int sample_count)
 		dest = spc::shrink_buffer;
 	}
 	else
+#endif
 		dest = buffer;
 
 	if (Settings.Mute)
@@ -331,6 +337,7 @@ bool8 S9xMixSamples (uint8 *buffer, int sample_count)
 	if (Settings.ReverseStereo && Settings.Stereo)
 		ReverseStereo(dest, sample_count);
 
+#if defined(USE_8BIT_SOUND) || defined(USE_MONO_SOUND)
 	if (!Settings.Stereo || !Settings.SixteenBitSound)
 	{
 		if (!Settings.Stereo)
@@ -344,6 +351,7 @@ bool8 S9xMixSamples (uint8 *buffer, int sample_count)
 
 		memcpy(buffer, dest, (sample_count << (Settings.SixteenBitSound ? 1 : 0)));
 	}
+#endif
 
 	return (TRUE);
 }
@@ -439,7 +447,9 @@ bool8 S9xInitSound (int buffer_ms, int lag_ms)
 	if (Settings.SixteenBitSound)
 		spc::buffer_size <<= 1;
 
+   #ifdef SHOW_DEBUG_MESSAGES
 	printf("Sound buffer size: %d (%d samples)\n", spc::buffer_size, sample_count);
+   #endif
 
 	if (spc::landing_buffer)
 		delete[] spc::landing_buffer;
@@ -492,7 +502,9 @@ void S9xDumpSPCSnapshot (void)
 static void SPCSnapshotCallback (void)
 {
 	S9xSPCDump(S9xGetFilenameInc((".spc"), SPC_DIR));
+   #ifdef SHOW_DEBUG_MESSAGES
 	printf("Dumped key-on triggered spc snapshot.\n");
+   #endif
 }
 
 bool8 S9xInitAPU (void)
@@ -587,8 +599,10 @@ void S9xAPUEndScanline (void)
 
 void S9xAPUTimingSetSpeedup (int ticks)
 {
+   #ifdef SHOW_DEBUG_MESSAGES
 	if (ticks != 0)
 		printf("APU speedup hack: %d\n", ticks);
+   #endif
 
 	spc::timing_hack_denominator = SNES_SPC::tempo_unit - ticks;
 	spc_core->set_tempo(spc::timing_hack_denominator);
