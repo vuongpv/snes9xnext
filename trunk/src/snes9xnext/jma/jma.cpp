@@ -286,14 +286,18 @@ namespace JMA
 
         //Allocate memory of the correct size to hold the compressed data in the JMA
         //Throw error on failure as that is unrecoverable from
+        #ifdef USE_EXCEPTION_HANDLING
         try
         {
+        #endif
           compressed_buffer = new unsigned char[compressed_size];
+        #ifdef USE_EXCEPTION_HANDLING
         }
         catch (bad_alloc xa)
         {
           throw(JMA_NO_MEM_ALLOC);
         }
+        #endif
 
         //Read all the compressed data in
         stream.read((char *)compressed_buffer, compressed_size);
@@ -441,17 +445,21 @@ namespace JMA
 
       //Allocate memory for compressed and decompressed data
       unsigned char *comp_buffer = 0, *decomp_buffer = 0;
+      #ifdef USE_EXCEPTION_HANDLING
       try
       {
+      #endif
         //Compressed data size is <= non compressed size
         unsigned char *combined_buffer = new unsigned char[chunk_size*2];
         comp_buffer = combined_buffer;
         decomp_buffer = combined_buffer+chunk_size;
+      #ifdef USE_EXCEPTION_HANDLING
       }
       catch (bad_alloc xa)
       {
         throw(JMA_NO_MEM_ALLOC);
       }
+      #endif
 
       size_t first_chunk_offset = size_to_skip % chunk_size;
       unsigned char int4_buffer[UINT_SIZE];
@@ -492,14 +500,18 @@ namespace JMA
     else //Solid JMA
     {
       unsigned char *decomp_buffer = 0;
+      #ifdef USE_EXCEPTION_HANDLING
       try
       {
+      #endif
         decomp_buffer = new unsigned char[get_total_size(files)];
+      #ifdef USE_EXCEPTION_HANDLING
       }
       catch (bad_alloc xa)
       {
         throw(JMA_NO_MEM_ALLOC);
       }
+      #endif
 
       get_all_files(decomp_buffer);
 

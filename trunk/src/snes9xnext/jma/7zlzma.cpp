@@ -22,8 +22,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 bool decompress_lzma_7z(ISequentialInStream& in, unsigned in_size, ISequentialOutStream& out, unsigned out_size) throw ()
 {
+#ifdef USE_EXCEPTION_HANDLING
   try
   {
+#endif
     NCompress::NLZMA::CDecoder cc;
 
     UINT64 in_size_l = in_size;
@@ -34,11 +36,13 @@ bool decompress_lzma_7z(ISequentialInStream& in, unsigned in_size, ISequentialOu
     if (out.size_get() != out_size || out.overflow_get())    { return(false); }
 
     return(true);
+#ifdef USE_EXCEPTION_HANDLING
   }
   catch (...)
   {
     return(false);
   }
+#endif
 }
 
 bool decompress_lzma_7z(const unsigned char* in_data, unsigned int in_size, unsigned char* out_data, unsigned int out_size) throw ()

@@ -189,8 +189,10 @@ using namespace std;
 
 size_t load_jma_file(const char *filename, unsigned char *buffer)
 {
+  #ifdef USE_EXCEPTION_HANDLING
   try
   {
+  #endif
     JMA::jma_open JMAFile(filename);
     vector<JMA::jma_public_file_info> file_info = JMAFile.get_files_info();
 
@@ -215,9 +217,11 @@ size_t load_jma_file(const char *filename, unsigned char *buffer)
     JMAFile.extract_file(our_file_name, buffer);
 
     return(our_file_size);
+  #ifdef USE_EXCEPTION_HANDLING
   }
   catch (JMA::jma_errors jma_error)
   {
     return(0);
   }
+  #endif
 }

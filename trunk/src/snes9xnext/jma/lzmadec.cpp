@@ -253,13 +253,17 @@ HRESULT CDecoder::CodeReal(ISequentialInStream *anInStream,
 
 HRESULT CDecoder::Code(ISequentialInStream *anInStream, ISequentialOutStream *anOutStream, const UINT64 *anInSize, const UINT64 *anOutSize)
 {
+  #ifdef USE_EXCEPTION_HANDLING
   try {
+  #endif
      return CodeReal(anInStream, anOutStream, anInSize, anOutSize);
+  #ifdef USE_EXCEPTION_HANDLING
   } catch (HRESULT& e) {
      return e;
   } catch (...) {
      return E_FAIL;
   }
+  #endif
 }
 
 HRESULT CDecoder::ReadCoderProperties(ISequentialInStream *anInStream)
