@@ -238,7 +238,9 @@ namespace spc
 static void EightBitize (uint8 *, int);
 static void DeStereo (uint8 *, int);
 #endif
+#ifdef USE_REVERSE_STEREO
 static void ReverseStereo (uint8 *, int);
+#endif
 static void UpdatePlaybackRate (void);
 static void from_apu_to_state (uint8 **, void *, size_t);
 static void to_apu_from_state (uint8 **, void *, size_t);
@@ -271,6 +273,7 @@ static void DeStereo (uint8 *buffer, int sample_count)
 }
 #endif
 
+#ifdef USE_REVERSE_STEREO
 static void ReverseStereo (uint8 *src_buffer, int sample_count)
 {
 	int16	*buffer = (int16 *) src_buffer;
@@ -282,6 +285,7 @@ static void ReverseStereo (uint8 *src_buffer, int sample_count)
 		buffer[i + 1] ^= buffer[i];
 	}
 }
+#endif
 
 bool8 S9xMixSamples (uint8 *buffer, int sample_count)
 {
@@ -334,8 +338,10 @@ bool8 S9xMixSamples (uint8 *buffer, int sample_count)
 		}
 	}
 
+#ifdef USE_REVERSE_STEREO
 	if (Settings.ReverseStereo && Settings.Stereo)
 		ReverseStereo(dest, sample_count);
+#endif
 
 #if defined(USE_8BIT_SOUND) || defined(USE_MONO_SOUND)
 	if (!Settings.Stereo || !Settings.SixteenBitSound)
