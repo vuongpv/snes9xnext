@@ -237,12 +237,14 @@ using namespace	std;
 bool8	pad_read = 0, pad_read_last = 0;
 uint8	read_idx[2 /* ports */][2 /* per port */];
 
+#ifndef DONT_USE_EXE_MULTI
 struct exemulti
 {
 	int32				pos;
 	bool8				data1;
 	s9xcommand_t		*script;
 };
+#endif
 
 struct crosshair
 {
@@ -304,7 +306,9 @@ static struct
 	int8				pads[4];
 }	mp5[2];
 
+#ifndef DONT_USE_EXE_MULTI
 static set<struct exemulti *>		exemultis;
+#endif
 static set<uint32>					pollmap[NUMCTLS + 1];
 static map<uint32, s9xcommand_t>	keymap;
 static vector<s9xcommand_t *>		multis;
@@ -523,7 +527,9 @@ static bool strless (const char *, const char *);
 static int findstr (const char *, const char **, int);
 static int get_threshold (const char **);
 static const char * maptypename (int);
+#ifndef DONT_USE_EXE_MULTI
 static int32 ApplyMulti (s9xcommand_t *, int32, int16);
+#endif
 static void do_polling (int);
 static void UpdatePolledMouse (int);
 
@@ -610,9 +616,11 @@ void S9xControlsReset (void)
 
 void S9xControlsSoftReset (void)
 {
+   #ifndef DONT_USE_EXE_MULTI
 	for (set<struct exemulti *>::iterator it = exemultis.begin(); it != exemultis.end(); it++)
 		delete *it;
 	exemultis.clear();
+   #endif
 
 	for (int i = 0; i < 2; i++)
 		for (int j = 0; j < 2; j++)
@@ -2072,6 +2080,7 @@ void S9xReportAxis (uint32 id, int16 value)
 	S9xApplyCommand(keymap[id], value, 0);
 }
 
+#ifndef DONT_USE_EXE_MULTI
 static int32 ApplyMulti (s9xcommand_t *multi, int32 pos, int16 data1)
 {
 	while (1)
@@ -2092,6 +2101,7 @@ static int32 ApplyMulti (s9xcommand_t *multi, int32 pos, int16 data1)
 
 	return (pos + 1);
 }
+#endif
 
 void S9xApplyCommand (s9xcommand_t cmd, int16 data1, int16 data2)
 {
@@ -2800,6 +2810,7 @@ void S9xApplyCommand (s9xcommand_t cmd, int16 data1, int16 data2)
 			S9xHandlePortCommand(cmd, data1, data2);
 			return;
 
+#ifndef DONT_USE_EXE_MULTI
 		case S9xButtonMulti:
 			if (cmd.button.multi_idx >= (int) multis.size())
 				return;
@@ -2818,6 +2829,7 @@ void S9xApplyCommand (s9xcommand_t cmd, int16 data1, int16 data2)
 			}
 
 			return;
+#endif
 
 		default:
 			fprintf(stderr, "WARNING: Unknown command type %d\n", cmd.type);
@@ -3376,6 +3388,7 @@ void S9xControlEOF (void)
 		S9xReportPointer(PseudoPointerBase + n, pseudopointer[n].x, pseudopointer[n].y);
 	}
 
+#ifndef DONT_USE_EXE_MULTI
 	set<struct exemulti *>::iterator	it, jt;
 
 	for (it = exemultis.begin(); it != exemultis.end(); it++)
@@ -3392,6 +3405,7 @@ void S9xControlEOF (void)
 			exemultis.erase(jt);
 		}
 	}
+#endif
 
 	do_polling(POLL_ALL);
 

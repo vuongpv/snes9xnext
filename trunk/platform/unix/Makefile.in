@@ -12,7 +12,7 @@ SNES9X_DIR = ../../src
 OBJS_DIR   = $(SNES9X_DIR)
 
 OBJECTS    = $(OBJS_DIR)/apu/apu.o $(OBJS_DIR)/apu/SNES_SPC.o $(OBJS_DIR)/apu/SNES_SPC_misc.o $(OBJS_DIR)/apu/SNES_SPC_state.o $(OBJS_DIR)/apu/SPC_DSP.o $(OBJS_DIR)/apu/SPC_Filter.o $(OBJS_DIR)/bsx.o $(OBJS_DIR)/cheats.o $(OBJS_DIR)/cheats2.o $(OBJS_DIR)/clip.o $(OBJS_DIR)/conffile.o $(OBJS_DIR)/controls.o $(OBJS_DIR)/cpu.o $(OBJS_DIR)/cpuexec.o $(OBJS_DIR)/cpuops.o $(OBJS_DIR)/crosshairs.o $(OBJS_DIR)/dma.o $(OBJS_DIR)/dsp.o $(OBJS_DIR)/dsp1.o $(OBJS_DIR)/dsp2.o $(OBJS_DIR)/dsp3.o $(OBJS_DIR)/dsp4.o $(OBJS_DIR)/gfx.o $(OBJS_DIR)/globals.o $(OBJS_DIR)/logger.o $(OBJS_DIR)/memmap.o $(OBJS_DIR)/movie.o $(OBJS_DIR)/obc1.o $(OBJS_DIR)/ppu.o $(OBJS_DIR)/reader.o $(OBJS_DIR)/sa1.o $(OBJS_DIR)/sa1cpu.o $(OBJS_DIR)/screenshot.o $(OBJS_DIR)/sdd1.o $(OBJS_DIR)/sdd1emu.o $(OBJS_DIR)/seta.o $(OBJS_DIR)/seta010.o $(OBJS_DIR)/seta011.o $(OBJS_DIR)/seta018.o $(OBJS_DIR)/snapshot.o $(OBJS_DIR)/snes9x.o $(OBJS_DIR)/spc7110.o $(OBJS_DIR)/srtc.o $(OBJS_DIR)/tile.o $(OBJS_DIR)/filter/2xsai.o $(OBJS_DIR)/filter/blit.o $(OBJS_DIR)/filter/epx.o $(OBJS_DIR)/filter/hq2x.o $(OBJS_DIR)/filter/snes_ntsc.o unix.o x11.o
-DEFS       = -DMITSHM -DCPU_SHUTDOWN -DSPC700_SHUTDOWN -DCORRECT_VRAM_READS -DUSE_SOUND_TOGGLE_CHANNEL
+DEFS       = -DMITSHM -DCPU_SHUTDOWN -DSPC700_SHUTDOWN -DCORRECT_VRAM_READS -DDONT_USE_EXE_MULTI
 
 ifdef S9XZSNESFX
 OBJECTS   += $(OBJS_DIR)/i386/fxemu2.o $(OBJS_DIR)/i386/fxemu2b.o $(OBJS_DIR)/i386/fxemu2c.o $(OBJS_DIR)/i386/fxtable.o $(OBJS_DIR)/i386/sfxproc.o $(OBJS_DIR)/i386/zsnes.o
