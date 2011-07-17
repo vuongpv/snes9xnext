@@ -240,8 +240,10 @@ HRESULT CDecoder::CodeReal(ISequentialInStream *anInStream,
           aRepDistances[0] = aDistance;
           // UpdateStat(aLen, aPosSlot);
         }
+        #ifdef USE_EXCEPTION_HANDLING
         if (aDistance >= aNowPos64)
           throw E_INVALIDDATA;
+        #endif
         m_OutWindowStream.CopyBackBlock(aDistance, aLen);
         aNowPos64 += aLen;
         aPreviousByte = m_OutWindowStream.GetOneByte(0 - 1);

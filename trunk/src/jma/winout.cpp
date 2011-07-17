@@ -79,8 +79,10 @@ HRESULT COut::Flush()
 void COut::MoveBlockBackward()
 {
   HRESULT aResult = Flush();
+  #ifdef USE_EXCEPTION_HANDLING
   if (aResult != S_OK)
     throw aResult;
+  #endif
   memmove(m_Buffer, m_Buffer + m_MoveFrom, m_WindowSize + m_KeepSizeAfter);
   m_Pos -= m_MoveFrom;
   m_StreamPos -= m_MoveFrom;

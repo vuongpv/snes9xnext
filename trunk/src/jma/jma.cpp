@@ -63,10 +63,12 @@ namespace JMA
 
     //The file block can't be larger than the JMA file without it's header.
     //This if can probably be improved
+    #ifdef USE_EXCEPTION_HANDLING
     if (file_block_size >= jma_file_size-jma_total_header_length)
     {
       throw(JMA_BAD_FILE);
     }
+    #endif
 
     //Seek to before file block so we can read the file block
     stream.seekg(-((int)file_block_size+UINT_SIZE),ios::end);
@@ -95,10 +97,12 @@ namespace JMA
       ISequentialOutStream_Ostream decompressed_data(decompressed_file_block);
 
       //Decompress the data
+      #ifdef USE_EXCEPTION_HANDLING
       if (!decompress_lzma_7z(compressed_data, compressed_size, decompressed_data, file_block_size))
       {
         throw(JMA_DECOMPRESS_FAILED);
       }
+      #endif
 
       //Go to beginning, setup pointer to buffer
       decompressed_file_block.seekg(0, ios::beg);
@@ -127,10 +131,12 @@ namespace JMA
       }
 
       //There must be a file name or the file is bad
+      #ifdef USE_EXCEPTION_HANDLING
       if (!file_info.name.length())
       {
         throw(JMA_BAD_FILE);
       }
+      #endif
 
       //Same trick as above for the comment
       file_info.comment = "";
@@ -174,18 +180,22 @@ namespace JMA
     compressed_buffer = 0;
 
     stream.open(compressed_file_name, ios::in | ios::binary);
+    #ifdef USE_EXCEPTION_HANDLING
     if (!stream.is_open())
     {
       throw(JMA_NO_OPEN);
     }
+    #endif
 
     //Header is "JMA\0N"
     unsigned char header[jma_header_length];
     stream.read((char *)header, jma_header_length);
+    #ifdef USE_EXCEPTION_HANDLING
     if (memcmp(jma_magic, header, jma_header_length))
     {
       throw(JMA_BAD_FILE);
     }
+    #endif
 
     //Not the cleanest code but logical
     stream.read((char *)header, 5);
@@ -194,10 +204,12 @@ namespace JMA
       chunk_size = charp_to_uint(header+1); //Chunk size is a UINT that follows version #
       retrieve_file_block();
     }
+    #ifdef USE_EXCEPTION_HANDLING
     else
     {
       throw(JMA_UNSUPPORTED_VERSION);
     }
+    #endif
   }
 
   //Destructor only has to close the stream if neccesary
@@ -232,10 +244,12 @@ namespace JMA
   void jma_open::chunk_seek(unsigned int chunk_num) throw(jma_errors)
   {
     //Check the stream is open
+    #ifdef USE_EXCEPTION_HANDLING
     if (!stream.is_open())
     {
       throw(JMA_NO_OPEN);
     }
+    #endif
 
     //Clear possible errors so the seek will work
     stream.clear();
@@ -260,10 +274,12 @@ namespace JMA
   vector<unsigned char *> jma_open::get_all_files(unsigned char *buffer) throw(jma_errors)
   {
     //If there's no stream we can't read from it, so exit
+    #ifdef USE_EXCEPTION_HANDLING
     if (!stream.is_open())
     {
       throw(JMA_NO_OPEN);
     }
+    #endif
 
     //Seek to the first chunk
     chunk_seek(0);
@@ -309,7 +325,9 @@ namespace JMA
         if (CRC32lib::CRC32(compressed_buffer, compressed_size) != charp_to_uint(int4_buffer))
         {
           delete[] compressed_buffer;
+          #ifdef USE_EXCEPTION_HANDLING
           throw(JMA_BAD_FILE);
+          #endif
         }
 
         //Decompress the data, cleanup memory on failure
@@ -318,7 +336,9 @@ namespace JMA
                                 (remaining_size > chunk_size) ? chunk_size : remaining_size))
         {
           delete[] compressed_buffer;
+          #ifdef USE_EXCEPTION_HANDLING
           throw(JMA_DECOMPRESS_FAILED);
+          #endif
         }
         delete[] compressed_buffer;
 
@@ -346,7 +366,9 @@ namespace JMA
       //Decompress the data
       if (!decompress_lzma_7z(compressed_data, compressed_size, decompressed_data, size))
       {
+        #ifdef USE_EXCEPTION_HANDLING
         throw(JMA_DECOMPRESS_FAILED);
+        #endif
       }
 
       /*
@@ -402,10 +424,12 @@ namespace JMA
   //Extracts the file with a given name found in the archive to the given buffer
   void jma_open::extract_file(string& name, unsigned char *buffer) throw(jma_errors)
   {
+    #ifdef USE_EXCEPTION_HANDLING
     if (!stream.is_open())
     {
       throw(JMA_NO_OPEN);
     }
+    #endif
 
     size_t size_to_skip = 0;
     size_t our_file_size = 0;
@@ -424,10 +448,12 @@ namespace JMA
       size_to_skip += i->size;
     }
 
+    #ifdef USE_EXCEPTION_HANDLING
     if (!our_file_size) //File with the specified name was not found in the archive
     {
       throw(JMA_FILE_NOT_FOUND);
     }
+    #endif
 
     //If the JMA only contains one file, we can skip a lot of overhead
     if (files.size() == 1)
@@ -479,14 +505,18 @@ namespace JMA
         if (CRC32lib::CRC32(comp_buffer, compressed_size) != charp_to_uint(int4_buffer))
         {
           delete[] comp_buffer;
+          #ifdef USE_EXCEPTION_HANDLING
           throw(JMA_BAD_FILE);
+          #endif
         }
 
         //Decompress chunk
         if (!decompress_lzma_7z(comp_buffer, compressed_size, decomp_buffer, chunk_size))
         {
           delete[] comp_buffer;
+          #ifdef USE_EXCEPTION_HANDLING
           throw(JMA_DECOMPRESS_FAILED);
+          #endif
         }
 
         size_t copy_amount = our_file_size-i > chunk_size-first_chunk_offset ? chunk_size-first_chunk_offset : our_file_size-i;

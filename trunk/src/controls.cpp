@@ -361,92 +361,79 @@ static const char	*speed_names[4] =
 
 static const int	ptrspeeds[4] = { 1, 1, 4, 8 };
 
-#ifdef USE_GFX_TOGGLE_BG
-   #define BG_LAYERS() \
-      S(ToggleBG0), \
-      S(ToggleBG1), \
-      S(ToggleBG2), \
-      S(ToggleBG3),
-#else
-   #define BG_LAYERS()
-#endif
-
-#ifdef USE_SOUND_TOGGLE_CHANNEL \
-#define SOUND_CHANNELS() \
-	S(SoundChannel0), \
-	S(SoundChannel1), \
-	S(SoundChannel2), \
-	S(SoundChannel3), \
-	S(SoundChannel4), \
-	S(SoundChannel5), \
-	S(SoundChannel6), \
-	S(SoundChannel7), \
-	S(SoundChannelsOn),
-#else
-   #define SOUND_CHANNELS()
-#endif
-
-// Note: these should be in asciibetical order!
-#define THE_COMMANDS \
-	S(BeginRecordingMovie), \
-	S(ClipWindows), \
-	S(Debugger), \
-	S(DecEmuTurbo), \
-	S(DecFrameRate), \
-	S(DecFrameTime), \
-	S(DecTurboSpeed), \
-	S(EmuTurbo), \
-	S(EndRecordingMovie), \
-	S(ExitEmu), \
-	S(IncEmuTurbo), \
-	S(IncFrameRate), \
-	S(IncFrameTime), \
-	S(IncTurboSpeed), \
-	S(LoadFreezeFile), \
-	S(LoadMovie), \
-	S(LoadOopsFile), \
-	S(Pause), \
-	S(QuickLoad000), \
-	S(QuickLoad001), \
-	S(QuickLoad002), \
-	S(QuickLoad003), \
-	S(QuickLoad004), \
-	S(QuickLoad005), \
-	S(QuickLoad006), \
-	S(QuickLoad007), \
-	S(QuickLoad008), \
-	S(QuickLoad009), \
-	S(QuickLoad010), \
-	S(QuickSave000), \
-	S(QuickSave001), \
-	S(QuickSave002), \
-	S(QuickSave003), \
-	S(QuickSave004), \
-	S(QuickSave005), \
-	S(QuickSave006), \
-	S(QuickSave007), \
-	S(QuickSave008), \
-	S(QuickSave009), \
-	S(QuickSave010), \
-	S(Reset), \
-	S(SaveFreezeFile), \
-	S(SaveSPC), \
-	S(Screenshot), \
-	S(SeekToFrame), \
-	S(SoftReset), \
-   SOUND_CHANNELS() \
-	S(SwapJoypads), \
-   BG_LAYERS() \
-	S(ToggleEmuTurbo), \
-	S(ToggleHDMA), \
-	S(ToggleSprites), \
-	S(ToggleTransparency) \
-
 #define S(x)	x
 
+// Note: these should be in asciibetical order!
 enum command_numbers
 {
-	THE_COMMANDS,
+	S(BeginRecordingMovie),
+	S(ClipWindows),
+	S(Debugger),
+	S(DecEmuTurbo),
+	S(DecFrameRate),
+	S(DecFrameTime),
+	S(DecTurboSpeed),
+	S(EmuTurbo),
+	S(EndRecordingMovie),
+	S(ExitEmu),
+	S(IncEmuTurbo),
+	S(IncFrameRate),
+	S(IncFrameTime),
+	S(IncTurboSpeed),
+	S(LoadFreezeFile),
+	S(LoadMovie),
+	S(LoadOopsFile),
+	S(Pause),
+	S(QuickLoad000),
+	S(QuickLoad001),
+	S(QuickLoad002),
+	S(QuickLoad003),
+	S(QuickLoad004),
+	S(QuickLoad005),
+	S(QuickLoad006),
+	S(QuickLoad007),
+	S(QuickLoad008),
+	S(QuickLoad009),
+	S(QuickLoad010),
+	S(QuickSave000),
+	S(QuickSave001),
+	S(QuickSave002),
+	S(QuickSave003),
+	S(QuickSave004),
+	S(QuickSave005),
+	S(QuickSave006),
+	S(QuickSave007),
+	S(QuickSave008),
+	S(QuickSave009),
+	S(QuickSave010),
+	S(Reset),
+	S(SaveFreezeFile),
+	S(SaveSPC),
+	S(Screenshot),
+	S(SeekToFrame),
+	S(SoftReset),
+#ifdef USE_SOUND_TOGGLE_CHANNEL
+	S(SoundChannel0),
+	S(SoundChannel1),
+	S(SoundChannel2),
+	S(SoundChannel3),
+	S(SoundChannel4),
+	S(SoundChannel5),
+	S(SoundChannel6),
+	S(SoundChannel7),
+	S(SoundChannelsOn),
+#endif
+	S(SwapJoypads),
+#ifdef USE_GFX_TOGGLE_BG
+   S(ToggleBG0),
+   S(ToggleBG1),
+   S(ToggleBG2),
+   S(ToggleBG3),
+#endif
+	S(ToggleEmuTurbo),
+	S(ToggleHDMA),
+	S(ToggleSprites),
+	S(ToggleTransparency),
 	LAST_COMMAND
 };
 
@@ -455,7 +442,74 @@ enum command_numbers
 
 static const char	*command_names[LAST_COMMAND + 1] =
 {
-	THE_COMMANDS,
+	S(BeginRecordingMovie),
+	S(ClipWindows),
+	S(Debugger),
+	S(DecEmuTurbo),
+	S(DecFrameRate),
+	S(DecFrameTime),
+	S(DecTurboSpeed),
+	S(EmuTurbo),
+	S(EndRecordingMovie),
+	S(ExitEmu),
+	S(IncEmuTurbo),
+	S(IncFrameRate),
+	S(IncFrameTime),
+	S(IncTurboSpeed),
+	S(LoadFreezeFile),
+	S(LoadMovie),
+	S(LoadOopsFile),
+	S(Pause),
+	S(QuickLoad000),
+	S(QuickLoad001),
+	S(QuickLoad002),
+	S(QuickLoad003),
+	S(QuickLoad004),
+	S(QuickLoad005),
+	S(QuickLoad006),
+	S(QuickLoad007),
+	S(QuickLoad008),
+	S(QuickLoad009),
+	S(QuickLoad010),
+	S(QuickSave000),
+	S(QuickSave001),
+	S(QuickSave002),
+	S(QuickSave003),
+	S(QuickSave004),
+	S(QuickSave005),
+	S(QuickSave006),
+	S(QuickSave007),
+	S(QuickSave008),
+	S(QuickSave009),
+	S(QuickSave010),
+	S(Reset),
+	S(SaveFreezeFile),
+	S(SaveSPC),
+	S(Screenshot),
+	S(SeekToFrame),
+	S(SoftReset),
+#ifdef USE_SOUND_TOGGLE_CHANNEL
+	S(SoundChannel0),
+	S(SoundChannel1),
+	S(SoundChannel2),
+	S(SoundChannel3),
+	S(SoundChannel4),
+	S(SoundChannel5),
+	S(SoundChannel6),
+	S(SoundChannel7),
+	S(SoundChannelsOn),
+#endif
+	S(SwapJoypads),
+#ifdef USE_GFX_TOGGLE_BG
+   S(ToggleBG0),
+   S(ToggleBG1),
+   S(ToggleBG2),
+   S(ToggleBG3),
+#endif
+	S(ToggleEmuTurbo),
+	S(ToggleHDMA),
+	S(ToggleSprites),
+	S(ToggleTransparency),
 	NULL
 };
 

@@ -49,8 +49,10 @@ bool CInByte::ReadBlock()
   m_ProcessedSize += (m_Buffer - m_BufferBase);
   UINT32 aNumProcessedBytes;
   HRESULT aResult = m_Stream->Read(m_BufferBase, m_BufferSize, &aNumProcessedBytes);
+#ifdef USE_EXCEPTION_HANDLING
   if (aResult != S_OK)
     throw aResult;
+#endif
   m_Buffer = m_BufferBase;
   m_BufferLimit = m_Buffer + aNumProcessedBytes;
   m_StreamWasExhausted = (aNumProcessedBytes == 0);
