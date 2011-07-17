@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >    
+    <TextView android:text="@string/app_version" 
+    			android:id="@+id/txtVersion" 
+				android:layout_width="wrap_content" 
+		        android:layout_height="wrap_content" 
+		        android:layout_marginBottom="10dip"
+		        android:layout_gravity="center_horizontal|center"
+        
+		        android:background="#AA000000"
+		        android:textColor="#ffffffff"
+		        
+		        android:typeface="monospace"
+		        android:textSize="15sp"
+		        android:layout_centerHorizontal="true"></TextView>    
+    
+    <ImageView android:id="@+id/mainLogo" 
+    			android:layout_width="match_parent" 
+    			android:src="@drawable/logo"  
+    			android:layout_weight="1" 
+    			android:layout_height="wrap_content"
+    			android:scaleType="fitCenter"
+    			android:layout_below="@+id/txtVersion"
+    			></ImageView>
+    		
+    <TextView android:text="Powered by: fceu" 
+    			android:id="@+id/aboutPoweredBy" 
+		 		android:layout_width="wrap_content" 
+		        android:layout_height="wrap_content" 
+		        android:layout_marginBottom="10dip"
+		        android:layout_gravity="center_horizontal|center"
+        
+		        android:background="#AA000000"
+		        android:textColor="#ffffffff"
+		        
+		        android:typeface="monospace"
+		        android:textSize="10sp"
+		        android:layout_below="@+id/txtVersion"
+		        android:layout_centerInParent="true"></TextView>    			
+    			
+    <TextView android:text="" 
+    			android:id="@+id/aboutSeeAlso" 
+		 		android:layout_width="wrap_content" 
+		        android:layout_height="wrap_content" 
+		        android:layout_marginBottom="10dip"
+		        android:layout_gravity="center_horizontal|center"
+        
+		        android:background="#AA000000"
+		        android:textColor="#ffffffff"
+		        
+		        android:typeface="monospace"
+		        android:textSize="10sp"
+		        android:layout_below="@+id/aboutPoweredBy"
+		        android:layout_centerInParent="true"></TextView>
+    			        
+    <TextView android:text="Website" 
+    			android:id="@+id/aboutWebsite" 
+    			android:layout_width="wrap_content" 
+		        android:layout_height="wrap_content" 
+		        android:layout_marginBottom="10dip"
+		        android:layout_gravity="center_horizontal|center"
+        
+		        android:background="#AA000000"
+		        android:textColor="#ffffffff"
+		        
+		        android:typeface="monospace"
+		        android:textSize="15sp"
+		        android:layout_below="@+id/aboutSeeAlso"
+		        android:layout_centerInParent="true">
+        </TextView>        
+    			
+    			 
+    <TextView android:text="Report Issues" 
+    			android:id="@+id/aboutIssues" 
+    			android:layout_width="wrap_content" 
+		        android:layout_height="wrap_content" 
+		        android:layout_marginBottom="10dip"
+		        android:layout_gravity="center_horizontal|center"
+        
+		        android:background="#AA000000"
+		        android:textColor="#ffffffff"
+		        
+		        android:typeface="monospace"
+		        android:textSize="15sp"
+		        android:layout_below="@+id/aboutWebsite"
+		        android:layout_centerInParent="true">
+        </TextView>    			 
+    		
+    <TextView android:text="Email: shinhalsafar@gmail.com" 
+    			android:id="@+id/aboutEmail" 
+    			android:layout_width="wrap_content" 
+		        android:layout_height="wrap_content" 
+		        android:layout_marginBottom="10dip"
+		        android:layout_gravity="center_horizontal|center"
+        
+		        android:background="#AA000000"
+		        android:textColor="#ffffffff"
+		        
+		        android:typeface="monospace"
+		        android:textSize="15sp"
+		        android:layout_below="@+id/aboutIssues"
+		        android:layout_centerInParent="true">
+        </TextView>
+                            		
+    			    			
+	<TextView  
+		android:id="@+id/aboutCopyright"
+  		android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:layout_marginBottom="20dip"
+        android:layout_gravity="center_horizontal|center"
+        
+        android:background="#AA000000"
+        android:textColor="#ffffffff"
+        
+        android:typeface="monospace"
+        android:textSize="15sp"   	    
+	    android:text="@string/Copyright"
+	    android:layout_alignParentBottom="true"
+	    android:layout_centerInParent="true"/>
+</RelativeLayout>

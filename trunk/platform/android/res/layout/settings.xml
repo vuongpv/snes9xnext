@@ -1,0 +1,147 @@
+<PreferenceScreen 
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:seekbar="http://schemas.android.com/apk/res/ca.halsafar.snesdroid">
+
+	<PreferenceCategory
+                android:title="Emulation">
+		<ListPreference
+	            android:title="Frameskip"
+	            android:key="frameSkip"
+	            android:defaultValue="1"
+	            android:entries="@array/frameSkipValues"
+	            android:entryValues="@array/frameSkipValues" />
+	            
+		<!--  <CheckBoxPreference android:key="useGameGenie" 
+				android:title="GameGenie"
+				android:summary="Requires game genie image!" 
+				android:defaultValue="false" /> -->
+				
+		<CheckBoxPreference android:key="enableAutosave" 
+				android:title="Autosave/Autoload"
+				android:summary="Uses state save to prevent loss of game" 
+				android:defaultValue="false" />
+
+		<CheckBoxPreference android:key="enableForward" 
+				android:title="Enable Fast Forward"
+				android:summary="Allows fast forward of emulation" 
+				android:defaultValue="false" /> 
+				
+		<CheckBoxPreference android:key="enableRewind" 
+				android:title="Enable Rewind"
+				android:summary="Might cause performance loss" 
+				android:defaultValue="false" />	
+				
+	    <!--  <ca.halsafar.widgets.SeekBarPreference  
+	            android:key="rewindCount"
+				android:persistent="true"
+				seekbar:minValue="1"
+				seekbar:maxValue="32"	 
+				android:defaultValue="4"           
+	            android:title="Rewind Points"
+	            android:dialogTitle="Rewind Points"
+				android:summary="Lower for better performance" />
+	            
+	    <ca.halsafar.widgets.SeekBarPreference  
+	            android:key="rewindFrequency"
+				android:persistent="true"
+				seekbar:minValue="64"
+				seekbar:maxValue="1024"
+				android:defaultValue="256"
+	            android:title="Rewind Frequency"
+	            android:dialogTitle="Rewind Frequency in Frames"
+				android:summary="Raise for better performance" />	   -->               								  					            
+	</PreferenceCategory>
+
+	<PreferenceCategory
+                android:title="Audio">			                
+		<CheckBoxPreference android:key="audio" 
+				android:title="Audio" 
+				android:defaultValue="true" />
+				
+		<ListPreference
+	            android:title="Sound Sample Rate"
+	            android:key="soundSampleRate"
+	            android:defaultValue="22050"
+	            android:entries="@array/listArray"
+	            android:entryValues="@array/listValues" />
+	</PreferenceCategory>
+	
+	
+	<PreferenceCategory
+                android:title="Graphics">
+		<CheckBoxPreference android:key="aspectRatio" 
+				android:title="Maintain Aspect Ratio" 
+				android:defaultValue="true" />
+				
+		<ListPreference
+	            android:title="Hardware Filtering"
+	            android:key="graphicsFilter"
+	            android:defaultValue="true"
+	            android:entries="@array/hardwareFilterArray"
+	            android:entryValues="@array/hardwareFilterValues" />						
+				
+		<Preference android:key="selectShaderPref" 
+				android:title="Select Shader" />
+				
+		<Preference android:key="resetShaderPref" 												
+				android:title="Reset Shader" />
+				
+		<Preference android:key="downloadShaderPref" 												
+				android:title="Download Shaders" />				
+	</PreferenceCategory>	
+
+	
+	<PreferenceCategory
+                android:title="Input">	
+	    <ca.halsafar.widgets.SeekBarPreference  
+	            android:key="xAxisSensitivity"
+				android:persistent="true"
+				seekbar:minValue="0"
+				seekbar:maxValue="100"
+				android:defaultValue="32"
+	            android:title="X-Axis Sensitivity"
+	            android:dialogTitle="X-Axis Sensitivity"
+	            android:summary="" />   
+	             	
+	    <ca.halsafar.widgets.SeekBarPreference  
+	            android:key="yAxisSensitivity"
+				android:persistent="true"
+				seekbar:minValue="0"
+				seekbar:maxValue="100"
+				android:defaultValue="35"
+	            android:title="Y-Axis Sensitivity"
+	           	android:dialogTitle="Y-Axis Sensitivity"
+	            android:summary="" />      
+	            
+		<Preference
+	            android:title="Configure Touch Input"
+	            android:summary="Modify input location/size"
+	            android:key="bntInputPref" />
+	            
+		<CheckBoxPreference android:key="prefShowTouchInput" 
+				android:title="Show Touch Input" 
+				android:defaultValue="true"
+				 />   	            
+	            
+		<Preference
+	            android:title="Configure Key Input"
+	            android:summary="Bind keyboard keys to emulator input"
+	            android:key="bntCustomKeys" />	            
+	            
+		<Preference
+	            android:title="Reset Input"
+	            android:summary="Reset to default"
+	            android:key="bntDefaultEmpty" />	                        
+	</PreferenceCategory>
+	
+	
+	<PreferenceCategory
+                android:title="Directories">
+                
+		<Preference
+	            android:title="Select ROM Dir"
+	            android:summary="ROM DIR: "
+	            android:key="prefRomDir" />				                
+                
+	</PreferenceCategory>                       
+</PreferenceScreen>

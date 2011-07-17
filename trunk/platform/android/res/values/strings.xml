@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="package_name">"ca.halsafar.snesdroid"</string>
+	<string name="app_version">1</string>
+    <string name="app_name">SNESDroid</string>
+    <string name="loadRomButtonLabel">Load ROM</string>
+    <string name="resumeButtonLabel">Resume</string>
+    <string name="aboutButtonLabel">About</string>
+    <string name="exitButtonLabel">Exit</string>
+    <string name="settingButtonLabel">Settings</string>
+    <string name="Copyright">Copyright 2011 - Stephen Damm</string>
+    
+    <string name="welcomeMsg">
+To install ROMS:\n
+- Exit SNESDroid\n
+- Connect your device to a PC\n
+- Put your device into \"disk mode\"\n
+(This step differs for each device)\n 
+- Copy ROMS to \"/SNESDroid/roms/\"\n
+(Directory should already be created)\n
+- Take your device out of \"disk mode\"\n
+- Start SNESDroid    
+    </string>
+    
+    <string name="website">https://sites.google.com/site/shinhalsafar/projects/snes-droid</string>
+    <string name="issueTracker">https://code.google.com/p/snes-droid/issues/list</string>    
+</resources>

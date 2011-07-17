@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ImageView  
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent"    
+        android:src="@drawable/logo"
+        android:scaleType="fitCenter" />
+        
+	<TextView
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:layout_marginBottom="20dip"
+        android:layout_gravity="center_horizontal|top"
+
+        android:padding="12dip"
+        
+        android:background="#AA000000"
+        android:textColor="#ffff0000"
+        
+        android:typeface="monospace"
+        android:textSize="22sp"
+        android:text="WELCOME TO GENPlusDroid" />    
+    
+    <TextView
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:layout_marginBottom="20dip"
+        android:layout_gravity="center_horizontal|center"
+
+        android:padding="12dip"
+        
+        android:background="#AA000000"
+        android:textColor="#ffffffff"
+        
+        android:typeface="monospace"
+        android:textSize="12sp"        
+        android:text="@string/welcomeMsg" />
+        
+    <Button android:text="ALREADY DONE" 
+    		android:id="@+id/btnWelcomeDone" 
+    		android:layout_width="100dip" 
+    		android:layout_height="wrap_content"
+    		android:layout_gravity="left|bottom"
+    		android:typeface="monospace">
+    		</Button>
+    		
+    <Button android:text="EXIT" 
+    		android:id="@+id/btnWelcomeExit" 
+    		android:layout_width="100dip" 
+    		android:layout_height="wrap_content"
+    		android:layout_gravity="right|bottom"
+    		android:typeface="monospace">
+    		</Button>    		
+
+</merge>
+
