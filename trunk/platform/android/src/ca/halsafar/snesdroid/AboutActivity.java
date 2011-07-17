@@ -1,5 +1,5 @@
 /**
- * GENPlusDroid
+ * SNESDRoid
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
@@ -7,6 +7,7 @@
 
 package ca.halsafar.snesdroid;
 
+import ca.halsafar.snesdroid.R;
 import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -28,7 +29,7 @@ public class AboutActivity extends Activity
           Log.d(LOG_TAG, "onCreate()");
           
           super.onCreate(savedInstanceState);
-                    
+          
           setContentView(R.layout.about);          
           
           TextView txt = (TextView) findViewById(R.id.txtVersion);
@@ -48,14 +49,19 @@ public class AboutActivity extends Activity
           issues.setMovementMethod(LinkMovementMethod.getInstance());
           
           TextView poweredBy = (TextView) findViewById(R.id.aboutPoweredBy);
-          text = "<a href=\"http://snes9x.ipherswipsite.com/\">Powered By: SNES9x</a>";
+          text = "<a href=\""+getString(R.string.poweredBy)+"\">Powered By: SNES9x</a>";
           poweredBy.setText(Html.fromHtml(text.toString())); 
           poweredBy.setMovementMethod(LinkMovementMethod.getInstance());
           
-          TextView seeAlso = (TextView) findViewById(R.id.aboutSeeAlso);
-          text = "See Also: <a href=\"market://search?q=pname:ca.halsafar.nesdroid\">NESDroid</a>";          
+          TextView seeAlso = (TextView) findViewById(R.id.aboutSeeAlsoNes);
+          text = "<a href=\"market://search?q=pname:ca.halsafar.nesdroid\">See Also: NESDroid</a>";          
           seeAlso.setText(Html.fromHtml(text.toString())); 
-          seeAlso.setMovementMethod(LinkMovementMethod.getInstance());                    
+          seeAlso.setMovementMethod(LinkMovementMethod.getInstance());
+          
+          seeAlso = (TextView) findViewById(R.id.aboutSeeAlsoGen);
+          text = "<a href=\"market://search?q=pname:ca.halsafar.genesisdroid\">See Also: GENPlusDroid</a>";          
+          seeAlso.setText(Html.fromHtml(text.toString())); 
+          seeAlso.setMovementMethod(LinkMovementMethod.getInstance());          
      }
      
      private String getVersion()

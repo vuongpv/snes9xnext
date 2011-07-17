@@ -22,6 +22,7 @@ To install ROMS:\n
 - Start SNESDroid    
     </string>
     
-    <string name="website">https://sites.google.com/site/shinhalsafar/projects/snes-droid</string>
-    <string name="issueTracker">https://code.google.com/p/snes-droid/issues/list</string>    
+    <string name="poweredBy">http://snes9x.ipherswipsite.com/</string>
+    <string name="website">http://code.google.com/p/snes9xnext/</string>
+    <string name="issueTracker">http://code.google.com/p/snes9xnext/issues/list</string>    
 </resources>

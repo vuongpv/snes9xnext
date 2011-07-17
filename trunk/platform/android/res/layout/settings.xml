@@ -26,30 +26,10 @@
 				android:summary="Allows fast forward of emulation" 
 				android:defaultValue="false" /> 
 				
-		<CheckBoxPreference android:key="enableRewind" 
+		<!--  <CheckBoxPreference android:key="enableRewind" 
 				android:title="Enable Rewind"
 				android:summary="Might cause performance loss" 
-				android:defaultValue="false" />	
-				
-	    <!--  <ca.halsafar.widgets.SeekBarPreference  
-	            android:key="rewindCount"
-				android:persistent="true"
-				seekbar:minValue="1"
-				seekbar:maxValue="32"	 
-				android:defaultValue="4"           
-	            android:title="Rewind Points"
-	            android:dialogTitle="Rewind Points"
-				android:summary="Lower for better performance" />
-	            
-	    <ca.halsafar.widgets.SeekBarPreference  
-	            android:key="rewindFrequency"
-				android:persistent="true"
-				seekbar:minValue="64"
-				seekbar:maxValue="1024"
-				android:defaultValue="256"
-	            android:title="Rewind Frequency"
-	            android:dialogTitle="Rewind Frequency in Frames"
-				android:summary="Raise for better performance" />	   -->               								  					            
+				android:defaultValue="false" />	               --> 								  					            
 	</PreferenceCategory>
 
 	<PreferenceCategory
