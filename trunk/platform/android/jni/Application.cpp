@@ -37,6 +37,8 @@ Application::Application():
 
      _rewindState = NULL;
      _rewindBuf = NULL;
+
+     GFX.Screen = NULL;
 }
 
 
@@ -352,8 +354,13 @@ int Application::loadROM(const char* filename)
      loadSRam(_currentRom);
 
      // init graphics
+     if (GFX.Screen != NULL)
+     {
+          free(GFX.Screen);
+     }
      GFX.Pitch = 1024;
-     GFX.Screen = (uint16_t *)memalign(1024, 1024 * 478);
+     GFX.Screen = (uint16_t *)malloc(1024 * 478);
+     memset(GFX.Screen, 0, 1024*478);
      if (_romLoaded)
      {
           S9xGraphicsDeinit();
