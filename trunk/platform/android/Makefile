@@ -13,6 +13,9 @@ headers:
 	javah -classpath bin ca.halsafar.snesdroid.Emulator
 	mv ca_halsafar_snesdroid_Emulator.h ./jni/EmulatorBridge.h
 	
+install:
+	adb install SNESDroidRelease.apk
+	
 uninstall:
 	adb uninstall ca.halsafar.snesdroid
 	

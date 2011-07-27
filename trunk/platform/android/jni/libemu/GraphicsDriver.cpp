@@ -382,8 +382,8 @@ void GraphicsDriver::ReshapeEmuTexture(int width, int height, float max)
      _emuHeight = height;
 
 	// texture coordinates
-	float xMax = width / max - (0.001);
-	float yMax = height / max - (0.001);
+	float xMax = width / max;
+	float yMax = height / max;
 
     _texCoords[0] = 0.0; _texCoords[1] =  yMax;
     _texCoords[2] = xMax; _texCoords[3] =  yMax;
@@ -535,7 +535,6 @@ void GraphicsDriver::DrawEMU(const void *texture, int emuw, int emuh)
      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emuw, emuh, _emuPixelFormat, _emuPixelType, texture);
-     checkGlError("glTexSubImage2D");
 
      //LOGD("DONE DRAW NES");
 }
@@ -575,8 +574,8 @@ void GraphicsDriver::Draw()
 
     if (_vEmuTextureSizeXHandle >= 0 && _vEmuTextureSizeYHandle >= 0)
     {
-         glUniform1f(_vEmuTextureSizeXHandle, 256);
-         glUniform1f(_vEmuTextureSizeYHandle, 240);
+         glUniform1f(_vEmuTextureSizeXHandle, _emuWidth);
+         glUniform1f(_vEmuTextureSizeYHandle, _emuHeight);
     }
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
