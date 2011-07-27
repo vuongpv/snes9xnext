@@ -44,6 +44,16 @@
 	            android:defaultValue="22050"
 	            android:entries="@array/listArray"
 	            android:entryValues="@array/listValues" />
+	            
+	    <ca.halsafar.widgets.SeekBarPreference  
+	            android:key="audioStretchPercent"
+				android:persistent="true"
+				seekbar:minValue="0"
+				seekbar:maxValue="10"
+				android:defaultValue="8"
+	            android:title="Audio Stretch"
+	           	android:dialogTitle="Audio Stretch"
+	            android:summary="Use to remove crackles on phones!" /> 	   	            
 	</PreferenceCategory>
 	
 	

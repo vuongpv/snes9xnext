@@ -140,8 +140,8 @@ int Application::init(JNIEnv *env, const char * apkAbsolutePath)
           Settings.FrameTimeNTSC = 16667;
           Settings.SixteenBitSound = true;
           Settings.Stereo = true;
-          Settings.SoundPlaybackRate = 22050 * 1.08;
-          Settings.SoundInputRate = 32000;
+          //Settings.SoundPlaybackRate = 22050 * 1.08;
+          Settings.SoundInputRate = 31977;//32000;
           Settings.SupportHiRes = true;
           Settings.Transparency = true;
           Settings.AutoDisplayMessages = true;
@@ -288,6 +288,7 @@ void Application::setAudioSampleRate(int rate)
 	}
 
 	_sampleRate = rate;
+     Settings.SoundPlaybackRate = _sampleRate;
 
 	if (_romLoaded && hardReset)
 	{

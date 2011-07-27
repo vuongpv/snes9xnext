@@ -26,7 +26,7 @@ public class PreferenceFacade
      public static final int DEFAULT_X_SENSITIVTY = 30;
      public static final int DEFAULT_Y_SENSITIVTY = 35;
      
-     public static final float DEFAULT_AUDIO_STRETCH = 1.08f;     
+     public static final int DEFAULT_AUDIO_STRETCH = 8;     
      
      // default dirs
      public static final String DEFAULT_DIR = "/SNESDroid";
@@ -180,7 +180,8 @@ public class PreferenceFacade
           boolean enableRewind = prefs.getBoolean(PreferenceFacade.PREF_ENABLE_REWIND, false);
           boolean enableForward = prefs.getBoolean(PreferenceFacade.PREF_ENABLE_FORWARD, false);
           boolean showTouchInput = prefs.getBoolean(PreferenceFacade.PREF_SHOW_TOUCH_INPUT, true);
-
+          float audioStretchPercent = 1.0f + (prefs.getInt("audioStretchPercent", PreferenceFacade.DEFAULT_AUDIO_STRETCH) / 100.0f);
+          
           // emulator settings
           Emulator.setFrameSkip(frameSkip);
           Emulator.setGameGenie(useGameGenie);
@@ -191,7 +192,7 @@ public class PreferenceFacade
           Emulator.setAudioEnabled(useAudio);
           if (useAudio)
           {
-               Emulator.setAudioSampleRate((int)(sampleRate * PreferenceFacade.DEFAULT_AUDIO_STRETCH));
+               Emulator.setAudioSampleRate((int)(sampleRate * audioStretchPercent));
                AudioPlayer.create(sampleRate, 16, 2);
                AudioPlayer.resume();
                Emulator.initAudioBuffer(AudioPlayer.getMaxBufferSize());
