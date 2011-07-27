@@ -53,27 +53,38 @@ JNIEXPORT void JNICALL Java_ca_halsafar_snesdroid_Emulator_destroy
 }
 
 
+JNIEXPORT jint JNICALL Java_ca_halsafar_snesdroid_Emulator_setPaths
+  (JNIEnv *env, jclass, jstring extStorageDir, jstring romDir, jstring stateDir, jstring sramDir, jstring cheatsDir)
+{
+     jboolean isCopy = false;
+    const char * szExternalStorage = env->GetStringUTFChars(extStorageDir, &isCopy);
+    const char * szRomDir = env->GetStringUTFChars(romDir, &isCopy);
+    const char * szStateDir = env->GetStringUTFChars(stateDir, &isCopy);
+    const char * szSramDir = env->GetStringUTFChars(sramDir, &isCopy);
+    const char * szCheatsDir = env->GetStringUTFChars(cheatsDir, &isCopy);
+
+    int retVal = Emulator.setPaths(szExternalStorage, szRomDir, szStateDir, szSramDir, szCheatsDir);
+
+    env->ReleaseStringUTFChars(extStorageDir, szExternalStorage);
+    env->ReleaseStringUTFChars(romDir, szRomDir);
+    env->ReleaseStringUTFChars(stateDir, szStateDir);
+    env->ReleaseStringUTFChars(sramDir, szSramDir);
+    env->ReleaseStringUTFChars(cheatsDir, szCheatsDir);
+}
+
+
 JNIEXPORT jint JNICALL Java_ca_halsafar_snesdroid_Emulator_init
   	  	  (JNIEnv* env, jclass cls,
-		  jstring apkAbsolutePath, jstring externalStorageDir,
-		  jstring romDir, jstring statesDir,
-		  jstring sramDir, jstring cheatsDir
-		  	  )
+		  jstring apkAbsolutePath)
 {
      LOGD("Emulator_init()");
 
      jboolean isCopy;
      const char * szFilename = env->GetStringUTFChars(apkAbsolutePath, &isCopy);
-     const char * szExternalStorage = env->GetStringUTFChars(externalStorageDir, &isCopy);
-     const char * szStateDir = env->GetStringUTFChars(statesDir, &isCopy);
-     const char * szSRamDir = env->GetStringUTFChars(sramDir, &isCopy);
 
-     int retVal = Emulator.init(env, szFilename, szExternalStorage, szStateDir, szSRamDir);
+     int retVal = Emulator.init(env, szFilename);
 
      env->ReleaseStringUTFChars(apkAbsolutePath, szFilename);
-     env->ReleaseStringUTFChars(externalStorageDir, szExternalStorage);
-     env->ReleaseStringUTFChars(statesDir, szStateDir);
-     env->ReleaseStringUTFChars(sramDir, szSRamDir);
 
 	return retVal;
 }
@@ -138,7 +149,7 @@ JNIEXPORT void JNICALL Java_ca_halsafar_snesdroid_Emulator_selectState
 
 
 JNIEXPORT void JNICALL Java_ca_halsafar_snesdroid_Emulator_setEnableRewind
-  (JNIEnv *, jclass, jboolean b, jint rewindBankCount, jint rewindFrameFrequency)
+  (JNIEnv *, jclass, jboolean b)
 {
 	// TODO: enable rewind
      Emulator.setRewind(b);

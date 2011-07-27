@@ -1,13 +1,11 @@
 /**
- * GENPlusDroid
+ * HAL EMU FRAMEWORK
+ *
+ * SEE LICENSE FILE FOR LICENSE INFO
+ *
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
- *
- * Sphere.h
- *
- *  Created on: 2011-05-05
- *      Author: halsafar
  */
 
 #ifndef SPHERE_H_

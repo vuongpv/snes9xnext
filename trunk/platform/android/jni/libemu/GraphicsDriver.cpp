@@ -1,5 +1,8 @@
 /**
- * GENPlusDroid
+ * HAL EMU FRAMEWORK
+ *
+ * SEE LICENSE FILE FOR LICENSE INFO
+ *
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
@@ -16,7 +19,7 @@ static const char gVertexShader[] = "attribute vec4 a_position;   \n"
         "uniform mat4 u_mvp;            \n"
         "void main()                  \n"
         "{                            \n"
-        "   gl_Position = u_mvp * a_position; \n"
+        "   gl_Position = u_mvp * vec4(a_position.xyz, 1); \n"
         "   v_texCoord = a_texCoord;  \n"
         "}                            \n";
 
@@ -76,50 +79,48 @@ GraphicsDriver::GraphicsDriver()
      _ratio = 0;
      _smooth = true;
 
-	_shaderProgram = 0;
-	_vMvpMatrix = -1;
-	_vPositionHandle = -1;
-	_vTexCoordHandle = -1;
-	_vSamplerHandle = -1;
-	_vAlphaHandle = -1;
+     _shaderProgram = 0;
+     _vMvpMatrix = -1;
+     _vPositionHandle = -1;
+     _vTexCoordHandle = -1;
+     _vSamplerHandle = -1;
+     _vAlphaHandle = -1;
 
-	_EmuShaderProgram = 0;
-	_vEmuMvpMatrix = -1;
-	_vEmuPositionHandle = -1;
-	_vEmuTexCoordHandle = -1;
-	_vEmuSamplerHandle = -1;
-	_vEmuTextureSizeXHandle = -1;
-	_vEmuTextureSizeYHandle = -1;
-	_vEmuPaletteSamplerHandle = -1;
+     _EmuShaderProgram = 0;
+     _vEmuMvpMatrix = -1;
+     _vEmuPositionHandle = -1;
+     _vEmuTexCoordHandle = -1;
+     _vEmuSamplerHandle = -1;
+     _vEmuTextureSizeXHandle = -1;
+     _vEmuTextureSizeYHandle = -1;
+     _vEmuPaletteSamplerHandle = -1;
 }
 
 
 GraphicsDriver::~GraphicsDriver()
 {
      if (_matrix != NULL)
-          {
-               delete _matrix;
-               _matrix = NULL;
-          }
+     {
+          delete _matrix;
+          _matrix = NULL;
+     }
 
      if (_vertices != NULL)
-          {
-               delete _vertices;
-               _vertices = NULL;
-          }
+     {
+          delete _vertices;
+          _vertices = NULL;
+     }
 
      if (_texCoords != NULL)
-	  {
-		   delete _texCoords;
-		   _texCoords = NULL;
-	  }
+     {
+          delete _texCoords;
+          _texCoords = NULL;
+     }
 }
 
 
 int GraphicsDriver::InitEmuShader(const char* vertex, const char* frag)
 {
-	LOGD("InitEmuShader(%p, %p)", vertex, frag);
-
      if (_EmuShaderProgram)
      {
           glDeleteProgram(_EmuShaderProgram);
@@ -156,13 +157,22 @@ int GraphicsDriver::InitEmuShader(const char* vertex, const char* frag)
      LOGI("glGetUniformLocation(\"u_mvp\") = %d\n",
               _vEmuMvpMatrix);
 
+     /*_vEmuPaletteSamplerHandle = glGetUniformLocation(_EmuShaderProgram, "s_palette");
+     checkGlError("glGetUniformLocation");
+     LOGI("glGetAttribLocation(\"s_palette\") = %d\n",
+              _vEmuPaletteSamplerHandle);*/
+
      return GRAPHICS_OK;
 }
 
 
-int GraphicsDriver::Init()
+int GraphicsDriver::Init(int maxEmuWidth, GLuint emuPixelFormat, GLuint emuPixelType)
 {
-     LOGD("GraphicsDriver.Init()");
+     LOGD("GraphicsDriver.Init(%d, %d, %d)", maxEmuWidth, emuPixelFormat, emuPixelType);
+
+     _emuMaxWidth = maxEmuWidth;
+     _emuPixelFormat = emuPixelFormat;
+     _emuPixelType = emuPixelType;
 
     /*LOGI("Version", GL_VERSION);
     LOGI("Vendor", GL_VENDOR);
@@ -197,67 +207,40 @@ int GraphicsDriver::Init()
     LOGI("glGetUniformLocation(\"u_mvp\") = %d\n",
               _vMvpMatrix);
 
-    //glUniformMatrix4fv(_vMvpMatrix, 1, false, _matrix);
-	// get a texture id for this, create the texture internally so we can sub image to it later
-	glActiveTexture(GL_TEXTURE0);
-	glGenTextures(1, &_textureId);
-	glBindTexture(GL_TEXTURE_2D, _textureId);
 
-	// Use loosely packed data
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // get a texture id for this, create the texture internally so we can sub image to it later
+    glActiveTexture(GL_TEXTURE0);
+    glGenTextures(1, &_textureId);
+    glBindTexture(GL_TEXTURE_2D, _textureId);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Use loosely packed data
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCREEN_RENDER_TEXTURE_WIDTH, SCREEN_RENDER_TEXTURE_HEIGHT, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, _emuPixelFormat, maxEmuWidth, maxEmuWidth, 0, _emuPixelFormat, _emuPixelType, NULL);
 
     // disable some gl stuff we wont ever need
     glDisable(GL_DEPTH_TEST);
 
     // fbo
-    /*GLuint fbo = -1;
-    glGenFramebuffers(1, &fbo);
+    /*glGenFramebuffers(1, &_fboId);
     checkGlError("glGenFramebuffer");
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _textureId, 0);*/
+    glBindFramebuffer(GL_FRAMEBUFFER_OES, _fboId);
+    glFramebufferTexture2D(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, _textureId, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER_OES, 0);*/
 
     return GRAPHICS_OK;
 }
 
 
-void GraphicsDriver::ReshapeEmuTexture(int width, int height)
-{
-	// get a texture id for this, create the texture internally so we can sub image to it later
-	/*glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, _textureId);
-
-	// Use loosely packed data
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);*/
-
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_BGRA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, 0);
-
-     _emuWidth = width;
-     _emuHeight = height;
-
-    // texture coordinates
-    float xMax = width / SCREEN_RENDER_TEXTURE_WIDTH;
-    float yMax = height / SCREEN_RENDER_TEXTURE_HEIGHT;
-
-    _texCoords[0] = 0.0; _texCoords[1] =  yMax;
-    _texCoords[2] = xMax; _texCoords[3] =  yMax;
-    _texCoords[4] = 0.0; _texCoords[5] =  0.0;
-    _texCoords[6] = xMax; _texCoords[7] =  0.0;
-}
-
-
 void GraphicsDriver::SetSmooth(bool b)
 {
-	LOGD("GraphicsDriver::SetSmooth(%d)", b);
-
      glBindTexture(GL_TEXTURE_2D, _textureId);
 
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, b ? GL_LINEAR : GL_NEAREST);
@@ -374,33 +357,43 @@ int GraphicsDriver::BlitToTexture(int texId, int width, int height, int bitDepth
 
 void GraphicsDriver::SetDimensions(int width, int height)
 {
-     LOGD("SetDimensions(%d, %d)", width, height);
+	LOGD("SetDimensions(%d, %d)", width, height);
 
-     _screenWidth = width;
-     _screenHeight = height;
+	_screenWidth = width;
+	_screenHeight = height;
 
-     glViewport(0, 0, _screenWidth, _screenHeight);
+	glViewport(0, 0, _screenWidth, _screenHeight);
 	SetAspectRatio(_ratio);
+
+    SetAspect();
 
 	LOGD("RealWidth: %f", _realWidth);
 	LOGD("RealHeight: %f", _realHeight);
 
-     SetAspect();
-
-     _setupScene();
+	_setupScene();
 }
 
 
-void GraphicsDriver::SetViewportOffsets(int xOffset, int yOffset)
+void GraphicsDriver::ReshapeEmuTexture(int width, int height, float max)
 {
+	LOGD("ReshapeEmuTexture(%d, %d)", width, height);
 
+     _emuWidth = width;
+     _emuHeight = height;
+
+	// texture coordinates
+	float xMax = width / max;
+	float yMax = height / max;
+
+    _texCoords[0] = 0.0; _texCoords[1] =  yMax;
+    _texCoords[2] = xMax; _texCoords[3] =  yMax;
+    _texCoords[4] = 0.0; _texCoords[5] =  0.0;
+    _texCoords[6] = xMax; _texCoords[7] =  0.0;
 }
 
 
 void GraphicsDriver::_setupScene()
 {
-	LOGD("GraphicsDriver::_setupScene()");
-
      float xCenter = (_screenWidth / 2.0f) - (_realWidth / 2.0f);
      float yCenter = (_screenHeight / 2.0f) - (_realHeight / 2.0f);
 
@@ -415,8 +408,6 @@ void GraphicsDriver::_setupScene()
     _matrix[1] = 0;  _matrix[5] = 2.0f / -_screenHeight;  _matrix[9] = 0;  _matrix[13] = 1;
     _matrix[2] = 0;  _matrix[6] = 0;  _matrix[10] = -2; _matrix[14] = -1;
     _matrix[3] = 0; _matrix[7] = 0; _matrix[11] = 0; _matrix[15] = 1;
-
-    LOGD("DONE GraphicsDriver::_setupScene()");
 }
 
 
@@ -444,7 +435,7 @@ void GraphicsDriver::SetAspect()
           height = 1;
      }
 
-     float device_aspect = ((float)width / (float)height);
+     float device_aspect = ((float)width) / ((float)height);
 
      LOGD("SetAspect(%d, %d, %f)", width, height, device_aspect);
 
@@ -532,29 +523,29 @@ void GraphicsDriver::DrawQuad2D(Quad2D* quad) const
 }
 
 
-void GraphicsDriver::DrawEmu(uint16_t *XBuf, int nesw, int nesh)
+void GraphicsDriver::DrawEMU(const void *texture, int emuw, int emuh)
 {
-     //LOGD("DrawEmu(%p, %d, %d", XBuf, nesw, nesh);
-     if (nesw != (int)_emuWidth)
-     {
-          ReshapeEmuTexture(nesw, nesh);
-     }
+     //LOGD("DrawNES(%p, %d, %d)", XBuf, nesw, nesh);
 
+     //LOGD("BIND TEXTURE");
      glActiveTexture(GL_TEXTURE0);
      glBindTexture(GL_TEXTURE_2D, _textureId);
-     //checkGlError("glBindTexture");
 
      glPixelStorei(GL_PACK_ALIGNMENT, 1);
      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, nesw, nesh, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, XBuf);
-     //checkGlError("glTexImage2D");
+     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emuw, emuh, _emuPixelFormat, _emuPixelType, texture);
+     checkGlError("glTexSubImage2D");
+
+     //LOGD("DONE DRAW NES");
 }
 
 
 void GraphicsDriver::Draw()
 {
+     // DRAW EMU TO FBO
     glUseProgram(_EmuShaderProgram);
+    //glBindFramebuffer(GL_FRAMEBUFFER_OES, _fboId);
     //checkGlError("glUseProgram");
 
     glVertexAttribPointer(_vEmuPositionHandle, 3, GL_FLOAT, GL_FALSE, 0, _vertices);
@@ -569,21 +560,48 @@ void GraphicsDriver::Draw()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureId);
 
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, _paletteTextureId);
+
     // Set the sampler texture unit to 0
     glUniform1i(_vEmuSamplerHandle, 0);
-    //checkGlError("glUniform1i Emu, 0");
+    //checkGlError("glUniform1i Emu");
+
+    //glUniform1i(_vEmuPaletteSamplerHandle, 1);
+    //checkGlError("glUniform1i Palette");
 
     glUniformMatrix4fv(_vEmuMvpMatrix, 1, false, _matrix);
     //checkGlError("glUniformMatrix4fv");
 
     if (_vEmuTextureSizeXHandle >= 0 && _vEmuTextureSizeYHandle >= 0)
     {
-         glUniform1f(_vEmuTextureSizeXHandle, SCREEN_RENDER_TEXTURE_WIDTH);
-         glUniform1f(_vEmuTextureSizeYHandle, SCREEN_RENDER_TEXTURE_HEIGHT);
+         glUniform1f(_vEmuTextureSizeXHandle, 256);
+         glUniform1f(_vEmuTextureSizeYHandle, 240);
     }
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    //checkGlError("glDrawArrays");
+    /*glBindFramebuffer(GL_FRAMEBUFFER_OES, 0);
+
+    // DRAW FBO TO SCREEN
+    glUseProgram(_shaderProgram);
+
+    glVertexAttribPointer(_vPositionHandle, 3, GL_FLOAT, GL_FALSE, 0, _vertices);
+    glVertexAttribPointer(_vTexCoordHandle, 2, GL_FLOAT, GL_FALSE, 0, _texCoords);
+
+    glEnableVertexAttribArray(_vPositionHandle);
+    glEnableVertexAttribArray(_vTexCoordHandle);
+
+    // Set the sampler texture unit to 0
+    glUniform1i(_vSamplerHandle, 0);
+
+
+    // set the alpha value for the quads
+    glUniform1f(_vAlphaHandle, 1.0f);
+
+    glUniformMatrix4fv(_vMvpMatrix, 1, false, _matrix);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    //checkGlError("glDrawArrays");*/
 }
 
 

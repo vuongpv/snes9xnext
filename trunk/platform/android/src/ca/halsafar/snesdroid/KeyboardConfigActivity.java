@@ -1,9 +1,18 @@
+/**
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
+ * Copyright 2011 Stephen Damm (Halsafar)
+ * All rights reserved.
+ * shinhalsafar@gmail.com
+ */
+
 package ca.halsafar.snesdroid;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnKeyListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -37,7 +46,7 @@ public class KeyboardConfigActivity extends ListActivity
      private int _modKeyCode = 0;
      
      private ListView _view = null;
-     
+     private AlertDialog _alertDialog = null;
      private ArrayAdapter<KeyBinding> _adapter;
 
      public void onCreate(Bundle state)
@@ -58,9 +67,9 @@ public class KeyboardConfigActivity extends ListActivity
                     int pos = parent.getPositionForView(view);
                     KeyBinding o = _adapter.getItem(pos);
                     
-                    new AlertDialog.Builder(KeyboardConfigActivity.this)
+                    _alertDialog = new AlertDialog.Builder(KeyboardConfigActivity.this)
                     .setTitle("Binding: " + o.name)
-                    .setMessage("Current Key: " + o.key)
+                    .setMessage("Current: " + o.key)
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                          public void onClick(DialogInterface dialog, int id) {
                               InputPreferences.setButton(getApplicationContext(), _modKeyCode, _modPos);
@@ -76,51 +85,43 @@ public class KeyboardConfigActivity extends ListActivity
                               dialog.cancel();
                          }
                     })
-                    .setOnKeyListener(new OnKeyListener()
-                    {                         
-                         public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event)
-                         {
-                        	      if(keyCode == KeyEvent.KEYCODE_VOLUME_UP || 
-                        			 keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                        			 keyCode == KeyEvent.KEYCODE_MENU)
-                        	      {
-                        	           return false;
-                        	      }
-                        	 
-                        	      if (_modPos >= 0)
-                        	      {
-                        	           ((AlertDialog)dialog).setMessage("New Key: " + keyCode);
-                        	           _modKeyCode = keyCode;
-                        	      }
-	                           
-                        	      return true;
-                         }
-                    }).create().show();
-
+                    .create();
+                    
+                    _alertDialog.show();
                }
           });
           
-          /*lv.setOnKeyListener(new OnKeyListener()
-          {
-               
+          _view.setOnKeyListener(new View.OnKeyListener()
+          {               
                public boolean onKey(View v, int keyCode, KeyEvent event)
                {
                     Log.d(LOG_TAG, "onKey(" + event + ")");
 
-                    if (keyCode != KeyEvent.KEYCODE_BACK && keyCode != KeyEvent.KEYCODE_MENU)
+                    if (_alertDialog != null && _alertDialog.isShowing())
                     {
-                         if (_modPos >= 0)
-                         {
-                              InputPreferences.setButton(getApplicationContext(), event.getKeyCode(), _modPos);
-                              
-                              reloadButtons();
-                         }
+                    	if(keyCode == KeyEvent.KEYCODE_VOLUME_UP || 
+                            keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                            keyCode == KeyEvent.KEYCODE_MENU)
+                    	{
+                    		return false;
+                    	}
+                  
+                    	if (_modPos >= 0)
+                    	{
+                            ((AlertDialog)_alertDialog).setMessage("New Key: " + keyCode);
+                            _modKeyCode = keyCode;
+                    	}
+                        
+                    	return true;
                     }
                     
                     return false;
                }
-          });*/
+
+          });
      }
+     
+     
      
      
      @Override

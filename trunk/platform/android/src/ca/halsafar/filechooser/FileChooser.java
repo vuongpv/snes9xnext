@@ -13,7 +13,6 @@ import ca.halsafar.downloader.DecompressListener;
 import ca.halsafar.snesdroid.Emulator;
 import ca.halsafar.snesdroid.R;
 
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -310,10 +309,13 @@ public class FileChooser extends Activity implements DecompressListener
          {
               //moveTaskToBack(true);             
               
-              if (_dirStack.size() > 0)
+              if (_dirStack.size() > 1)
               {
-                   currentDir = new File(_dirStack.pop());
-                   fill(currentDir);                   
+            	  _dirStack.pop();
+            	  File file = new File(_dirStack.peek());
+            	  
+                  currentDir = file;
+                  fill(currentDir);                   
               }
               else
               {

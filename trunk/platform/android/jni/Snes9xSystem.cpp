@@ -102,9 +102,16 @@ bool8 S9xInitUpdate (void)
 }
 
 
+static int s_lastWidth = 0;
 bool8 S9xDeinitUpdate (int width, int height)
 {
-	Emulator.Graphics.DrawEmu(GFX.Screen, width, height);
+     if (width != s_lastWidth)
+     {
+          s_lastWidth = width;
+          Emulator.Graphics.ReshapeEmuTexture(width, height, SCREEN_RENDER_TEXTURE_WIDTH);
+     }
+
+	Emulator.Graphics.DrawEMU(GFX.Screen, width, height);
 
 	return true;
 }

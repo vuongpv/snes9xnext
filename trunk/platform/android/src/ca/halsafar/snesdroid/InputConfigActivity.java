@@ -1,7 +1,18 @@
+/**
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
+ * Copyright 2011 Stephen Damm (Halsafar)
+ * All rights reserved.
+ * shinhalsafar@gmail.com
+ */
 package ca.halsafar.snesdroid;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import ca.halsafar.snesdroid.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -26,7 +37,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 public class InputConfigActivity extends Activity implements GestureDetector.OnGestureListener
@@ -77,9 +87,8 @@ public class InputConfigActivity extends Activity implements GestureDetector.OnG
           _analogRects = new RectF[_analogCount];
           _analogBitmaps = new Bitmap[_analogCount];          
                     
-          WindowManager mWinMgr = (WindowManager)this.getSystemService(Activity.WINDOW_SERVICE);
-          _screenWidth = mWinMgr.getDefaultDisplay().getWidth();
-          _screenHeight = mWinMgr.getDefaultDisplay().getHeight();
+    	  _screenWidth = PreferenceFacade.getRealScreenWidth(this, context);
+    	  _screenHeight = PreferenceFacade.getRealScreenHeight(this, context);
                              
           // create the game window rect
           float ratio = 4.0f / 3.0f;
@@ -130,7 +139,7 @@ public class InputConfigActivity extends Activity implements GestureDetector.OnG
                float y = InputPreferences.getButtonY(context, i);
                float w = InputPreferences.getButtonWidth(context, i);
                float h = InputPreferences.getButtonHeight(context, i);
-               int code = InputPreferences.getButtonCode(context, i);
+               //int code = InputPreferences.getButtonCode(context, i);
                int map = InputPreferences.getButtonMap(context, i);
                String textureFile = InputPreferences.getButtonTexture(context, i);
 

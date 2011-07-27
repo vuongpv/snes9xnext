@@ -83,13 +83,40 @@ void Application::setRewind(bool b)
 }
 
 
-int Application::init(JNIEnv *env, const char * apkAbsolutePath, const char * externalStorageDir,
-		const char * stateDir, const char * sramDir)
+int Application::setPaths(const char* externalStorageDir, const char* romDir,
+                                    const char* stateDir, const char* sramDir,
+                                    const char* cheatsDir)
+{
+     LOGD("EXTERNAL_STORAGE_DIR: %s", externalStorageDir);
+     LOGD("ROM_DIR: %s", romDir);
+     LOGD("STATE_DIR: %s", stateDir);
+     LOGD("SRAM_DIR: %s", sramDir);
+     LOGD("CHEATS_DIR: %s", cheatsDir);
+
+     if (externalStorageDir == NULL || strlen(externalStorageDir) >= MAX_PATH)
+     {
+          return NATIVE_ERROR;
+     }
+
+     if (stateDir == NULL || strlen(stateDir) >= MAX_PATH)
+     {
+          return NATIVE_ERROR;
+     }
+
+     strcpy(_stateDir, stateDir);
+
+     if (sramDir == NULL || strlen(sramDir) >= MAX_PATH)
+     {
+          return NATIVE_ERROR;
+     }
+
+     strcpy(_sramDir, sramDir);
+}
+
+
+int Application::init(JNIEnv *env, const char * apkAbsolutePath)
 {
      LOGD("APK_PATH: %s", apkAbsolutePath);
-     LOGD("EXTERNAL_STORAGE_DIR: %s", externalStorageDir);
-     LOGD("STATE DIR: %s", stateDir);
-     LOGD("SRAM DIR: %s", sramDir);
 
      // TODO: setup genesis directories
 
@@ -100,21 +127,6 @@ int Application::init(JNIEnv *env, const char * apkAbsolutePath, const char * ex
      }
 
      strcpy(_apkPath, apkAbsolutePath);
-
-     if (stateDir == NULL || strlen(stateDir) >= MAX_PATH)
-     {
-    	 return NATIVE_ERROR;
-     }
-
-     strcpy(_stateDir, stateDir);
-
-     if (sramDir == NULL || strlen(sramDir) >= MAX_PATH)
-     {
-    	 return NATIVE_ERROR;
-     }
-
-     strcpy(_sramDir, sramDir);
-
 
      if (!_fceuInitialized)
      {
@@ -164,7 +176,9 @@ int Application::initAudioBuffers(const int sizeInSamples)
 
 int Application::initGraphics()
 {
-     Graphics.Init();
+     Graphics.Init(SCREEN_RENDER_TEXTURE_WIDTH,
+                    GL_RGB,
+                    GL_UNSIGNED_SHORT_5_6_5);
 
      Graphics.InitEmuShader(NULL, NULL);
      Graphics.Clear();
@@ -372,7 +386,9 @@ int Application::loadROM(const char* filename)
           return NATIVE_ERROR;
      }
 
-     Graphics.ReshapeEmuTexture(256, 224);
+     Graphics.ReshapeEmuTexture(SNES_RENDER_TEXTURE_WIDTH,
+                                  SNES_RENDER_TEXTURE_HEIGHT,
+                                  SCREEN_RENDER_TEXTURE_WIDTH);
 
    	// store current rom
    	strcpy(_currentRom, filename);

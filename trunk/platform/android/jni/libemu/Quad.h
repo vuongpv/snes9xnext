@@ -1,13 +1,11 @@
 /**
- * GENPlusDroid
+ * HAL EMU FRAMEWORK
+ *
+ * SEE LICENSE FILE FOR LICENSE INFO
+ *
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
- *
- * Quad.h
- *
- *  Created on: 2011-05-01
- *      Author: halsafar
  */
 
 #ifndef QUAD_H_

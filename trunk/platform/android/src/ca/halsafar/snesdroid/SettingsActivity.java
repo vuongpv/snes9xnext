@@ -1,5 +1,8 @@
 /**
- * NESDroid
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
@@ -7,6 +10,7 @@
 
 package ca.halsafar.snesdroid;
 
+import java.io.File;
 import java.util.Map;
 
 import ca.halsafar.downloader.Decompress;
@@ -23,6 +27,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -95,7 +100,7 @@ public class SettingsActivity extends PreferenceActivity implements
                    edit.commit();
                    
                    // safe to reset input anytime, nice for people who are editing input
-                   PreferenceFacade.resetInput(getApplicationContext());
+                   EmulatorButtons.resetInput(SettingsActivity.this, getApplicationContext());
                
                    return true;
               }
@@ -180,45 +185,46 @@ public class SettingsActivity extends PreferenceActivity implements
           });
           
           // add on click warning for game genie
-          /*CheckBoxPreference checkPref = (CheckBoxPreference) findPreference(PreferenceFacade.PREF_ENABLE_GAME_GENIE);
-          checkPref.setOnPreferenceClickListener(new OnPreferenceClickListener()
+          CheckBoxPreference checkPref = (CheckBoxPreference) findPreference(PreferenceFacade.PREF_ENABLE_GAME_GENIE);
+          if (checkPref != null)
           {
-               public boolean onPreferenceClick(Preference preference)
-              {
-                    boolean checkValue = ((CheckBoxPreference)preference).isChecked();                    
-                    if (checkValue)
-                    {
-                         // check for gg rom
-                         String romFile = Environment.getExternalStorageDirectory() + PreferenceFacade.DEFAULT_DIR + "/gg.rom";
-                         File f = new File(romFile);
-                         if (!f.exists())
-                         {
-                              Builder dialog = new AlertDialog.Builder(SettingsActivity.this)
-                              .setTitle("Game Genie Not Found")
-                              .setMessage("Game Genie not found, place game genie image at: " + romFile)
-                              .setPositiveButton("Ok", null);
-                              
-                              dialog.show();   
-                              
-                              ((CheckBoxPreference)preference).setChecked(false);
-                         }
-                         
-                         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                         boolean enableAutosave = prefs.getBoolean(PreferenceFacade.PREF_ENABLE_AUTO_SAVE, false);                    
-                         if (enableAutosave)
-                         {
-                              Toast.makeText(getApplicationContext(), "Cannot auto load with game genie enabled, will still auto save." , Toast.LENGTH_LONG).show();
-                         }                    
-                         
-                    }
-
-                   return false;
-              }
-          });
-          */
-          
+	          checkPref.setOnPreferenceClickListener(new OnPreferenceClickListener()
+	          {
+	               public boolean onPreferenceClick(Preference preference)
+	              {
+	                    boolean checkValue = ((CheckBoxPreference)preference).isChecked();                    
+	                    if (checkValue)
+	                    {
+	                         // check for gg rom
+	                         String romFile = Environment.getExternalStorageDirectory() + PreferenceFacade.DEFAULT_DIR + "/gg.rom";
+	                         File f = new File(romFile);
+	                         if (!f.exists())
+	                         {
+	                              Builder dialog = new AlertDialog.Builder(SettingsActivity.this)
+	                              .setTitle("Game Genie Not Found")
+	                              .setMessage("Game Genie not found, place game genie image at: " + romFile)
+	                              .setPositiveButton("Ok", null);
+	                              
+	                              dialog.show();   
+	                              
+	                              ((CheckBoxPreference)preference).setChecked(false);
+	                         }
+	                         
+	                         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+	                         boolean enableAutosave = prefs.getBoolean(PreferenceFacade.PREF_ENABLE_AUTO_SAVE, false);                    
+	                         if (enableAutosave)
+	                         {
+	                              Toast.makeText(getApplicationContext(), "Cannot auto load with game genie enabled, will still auto save." , Toast.LENGTH_LONG).show();
+	                         }                    
+	                         
+	                    }
+	
+	                   return false;
+	              }
+	          });
+          }     
           // add onclick for reset to default shader
-          CheckBoxPreference checkPref = (CheckBoxPreference) findPreference(PreferenceFacade.PREF_ENABLE_AUTO_SAVE);
+          checkPref = (CheckBoxPreference) findPreference(PreferenceFacade.PREF_ENABLE_AUTO_SAVE);
           checkPref.setOnPreferenceClickListener(new OnPreferenceClickListener()
           {
                public boolean onPreferenceClick(Preference preference)
@@ -239,36 +245,7 @@ public class SettingsActivity extends PreferenceActivity implements
                     return false;
               }
           });          
-          
-          
-          // set on click for enable rewind
-          /*checkPref = (CheckBoxPreference) findPreference(PreferenceFacade.PREF_ENABLE_REWIND);
-          checkPref.setOnPreferenceClickListener(new OnPreferenceClickListener()
-          {
-               public boolean onPreferenceClick(Preference preference)
-              {
-                    boolean checkValue = ((CheckBoxPreference)preference).isChecked();                    
-                    if (checkValue)
-                    {
-                         SeekBarPreference seekPref = (SeekBarPreference) findPreference(PreferenceFacade.PREF_REWIND_COUNT);
-                         seekPref.setEnabled(true);
-                         
-                         seekPref = (SeekBarPreference) findPreference(PreferenceFacade.PREF_REWIND_FREQUENCY);
-                         seekPref.setEnabled(true);                         
-                    }
-                    else
-                    {
-                         SeekBarPreference seekPref = (SeekBarPreference) findPreference(PreferenceFacade.PREF_REWIND_COUNT);
-                         seekPref.setEnabled(false);
-                         
-                         seekPref = (SeekBarPreference) findPreference(PreferenceFacade.PREF_REWIND_FREQUENCY);
-                         seekPref.setEnabled(false);                         
-                    }                              
-
-                    return false;
-              }
-          });*/
-          
+                    
           // set on click for directories
           customPref = (Preference) findPreference(PreferenceFacade.PREF_DIR_ROMS);
           customPref.setSummary(PreferenceFacade.getRomDir(getApplicationContext()));
@@ -292,18 +269,7 @@ public class SettingsActivity extends PreferenceActivity implements
                     return true;
               }
           });
-          
-          
-          // enable/disable components as needed
-          /*checkPref = (CheckBoxPreference) findPreference(PreferenceFacade.PREF_ENABLE_REWIND);
-          boolean rewindCheck = checkPref.isChecked();
-          
-          SeekBarPreference seekPref = (SeekBarPreference) findPreference(PreferenceFacade.PREF_REWIND_COUNT);
-          seekPref.setEnabled(rewindCheck);
-          
-          seekPref = (SeekBarPreference) findPreference(PreferenceFacade.PREF_REWIND_FREQUENCY);
-          seekPref.setEnabled(rewindCheck);*/  
-          
+                                       
           // add preference change listener to update the summaries
           getPreferenceScreen().getSharedPreferences()
                     .registerOnSharedPreferenceChangeListener(this);

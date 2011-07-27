@@ -1,5 +1,9 @@
 /**
- * NESDroid
+ * AudioPlayer
+ * 
+ * See LICENSE file included with this project for info.
+ * 	Free to use, non-commercial license.
+ * 
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
@@ -67,10 +71,12 @@ public class AudioPlayer
      {
           int retVal = 0;
           //Log.d(LOG_TAG, "PLAYING: " + size);
-          if (_track != null)
+          if (_track == null)
           {
-               retVal = _track.write(data, 0, size);
+               return retVal;
           }
+          
+          retVal = _track.write(data, 0, size);
           
           return retVal;
      }
@@ -104,6 +110,8 @@ public class AudioPlayer
 
      public static boolean create(int rate, int bits, int channels)
      {                 
+    	 Log.d(LOG_TAG, "create(" + rate + ", " + bits + ", " + channels + ")");
+    	 
           // start the audio thread, @HACK - no longer a thread!
           _track = null;          
           _rate = rate;
@@ -125,15 +133,25 @@ public class AudioPlayer
           
           _minSamples = bufferSize;
           
+          // HACK - double buffer size for anything less than honeycomb
+          // 		basically this means any tablet will run perfect
+          //		phones get the hack applied
+          int bufferScalar = 1;
+          if (android.os.Build.VERSION.SDK_INT < 11)
+          {
+        	  Log.d(LOG_TAG, "AudioPlayer.Create() - Buffer * 2 hack applied!");
+        	  bufferScalar = 2;
+          }
+          
           try
           {
-               // @HACK - *2 to mitigate underruns!
+               // @HACK - *2 to mitigate underruns! - not needed it appears and causes lag
                _track = new AudioTrack(
                               AudioManager.STREAM_MUSIC,
                               _rate,
                               channelConfig,
                               format,
-                              bufferSize * 2,
+                              bufferSize * bufferScalar,
                               AudioTrack.MODE_STREAM);
 
                if (_track.getState() == AudioTrack.STATE_UNINITIALIZED)
@@ -155,7 +173,7 @@ public class AudioPlayer
      }
     
               
-     public static int getMinBufferSize()
+     public static int getMaxBufferSize()
      {
           return _minSamples;
      }

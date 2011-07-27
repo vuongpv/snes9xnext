@@ -1,5 +1,8 @@
 /**
- * NESDroid
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
@@ -24,6 +27,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 import ca.halsafar.audio.AudioPlayer;
+import ca.halsafar.snesdroid.Emulator;
 
 
 /**
@@ -434,38 +438,65 @@ class EmulatorView extends GLSurfaceView
      }
      
     
-     public boolean dispatchKeyEvent(KeyEvent event)
-     {
+     /*public boolean dispatchKeyEvent(KeyEvent event)
+     {    	 
+    	 if (event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP ||
+    			 event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_DOWN ||
+    			 event.getKeyCode() == KeyEvent.KEYCODE_MENU)
+            return super.dispatchKeyEvent(event);
+    	     	 
           if (event.getAction() == KeyEvent.ACTION_DOWN)
           {
-               Emulator.onKeyDown(event.getKeyCode());
+         	 Log.d(LOG_TAG, "onKeyDown(" + event.getKeyCode() + ", " + event + ")");
+             Emulator.onKeyDown(event.getKeyCode());
+             
+             return true;
           }
           else if (event.getAction() == KeyEvent.ACTION_UP)
           {
-               Emulator.onKeyUp(event.getKeyCode());
+        	  Log.d(LOG_TAG, "onKeyUp(" + event.getKeyCode() + ", " + event + ")");
+              Emulator.onKeyUp(event.getKeyCode());
+              
+              return true;
           }
           
           return super.dispatchKeyEvent(event);
-     }
+     }*/
      
-    /* @Override
+     @Override
      public boolean onKeyUp(int keyCode, KeyEvent event)
      {
+    	 Log.d(LOG_TAG, "onKeyUp(" + keyCode + ", " + event + ")");
+    	 
+          if (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
+                    keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                    keyCode == KeyEvent.KEYCODE_MENU)
+               return super.onKeyUp(keyCode, event);
+
           Emulator.onKeyUp(event.getKeyCode());
-          
-          return super.onKeyUp(keyCode, event);
+
+          return true;
+          //return super.onKeyUp(keyCode, event);
      }
-     
-     
+
+
      @Override
      public boolean onKeyDown(int keyCode, KeyEvent event)
      {
+    	 Log.d(LOG_TAG, "onKeyDown(" + keyCode + ", " + event + ")");
+    	 
+          if (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
+                    keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                    keyCode == KeyEvent.KEYCODE_MENU)
+               return super.onKeyDown(keyCode, event);
+
           Emulator.onKeyDown(event.getKeyCode());
-          
-          return super.onKeyDown(keyCode, event);
-     }    */ 
 
-
+          return true;
+          //return super.onKeyDown(keyCode, event);
+     }
+     
+     
      @Override
      public void onWindowFocusChanged(boolean hasFocus)
      {
@@ -476,7 +507,7 @@ class EmulatorView extends GLSurfaceView
 
      private class Renderer implements GLSurfaceView.Renderer
      {
-          short[] tempBuf = new short[2048];
+          short[] tempBuf = new short[PreferenceFacade.AUDIO_MIX_SAMPLES_MAX];
 
 
           public void onDrawFrame(GL10 gl)
@@ -487,44 +518,38 @@ class EmulatorView extends GLSurfaceView
                // android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
                // android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY);
 
-               if (!_hasFocus)
-               {
-            	   Emulator.draw();
-            	   return;
-               }
+        	  if (!_hasFocus)
+              {
+        		  Emulator.draw();
+        		  return;
+              }
 
-               Emulator.step();
-               Emulator.draw(); 
-               
-               int readAmount = Emulator.mixAudioBuffer(tempBuf);
-               if (readAmount <= 0)
-               {
-            	   return;
-               }          
-               
-               //Log.d(LOG_TAG, "AudioMix Samples: " + readAmount);
-               AudioPlayer.play(tempBuf, readAmount);               
+              Emulator.step();
+              Emulator.draw(); 
+              
+              int readAmount = Emulator.mixAudioBuffer(tempBuf);
+              if (readAmount <= 0)
+              {
+            	  return;
+              }          
+              
+              //Log.d(LOG_TAG, "AudioMix Samples: " + readAmount);
+              AudioPlayer.play(tempBuf, readAmount);                                
           }
 
 
           public void onSurfaceChanged(GL10 gl, int width, int height)
           {
-               Log.d(LOG_TAG, "onSurfaceChanged()");
+               Log.d(LOG_TAG, "onSurfaceChanged(" + width + ", " + height + ")");
                
                Emulator.setViewport(width, height);
-               /*SharedPreferences prefs = PreferenceManager
-                         .getDefaultSharedPreferences(_activity
-                                   .getApplicationContext());
-               boolean keepAspect = prefs.getBoolean("aspectRatio", true);
-
-               Emulator.setKeepAspectRatio(keepAspect);*/
           }
 
 
           public void onSurfaceCreated(GL10 gl, EGLConfig config)
           {
                Log.d(LOG_TAG, "onSurfaceCreated()");              
- 
+                
                // init graphics
                Emulator.initGraphics();
                

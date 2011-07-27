@@ -1,11 +1,17 @@
 /**
- * GENPlusDroid
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
  */
-
 package ca.halsafar.snesdroid;
+
+/**
+ * MAJOR TODO 	- remove app specific stuff in PreferenceFacade
+ */
 
 /**
  * Emulator bridge to native side.
@@ -30,12 +36,13 @@ public class Emulator
 		
 	}
 	
-	public static native int init(final String apkAbsolutePath, 
-								  final String externalStoragePath, 
-								  final String romPath,
-								  final String stateSavePath,
-								  final String sramPath,
-								  final String cheatPath);
+	public static native int init(final String apkAbsolutePath);
+	
+	public static native int setPaths(final String externalStoragePath, 
+									final String romPath,
+									final String stateSavePath,
+									final String sramPath,
+									final String cheatPath);
 	
 	public static native int initGraphics();
 	
@@ -80,7 +87,7 @@ public class Emulator
 	
 	public static native void selectState(final int i);
 	
-	public static native void setEnableRewind(final boolean enableRewind, final int rewindBankCount, final int rewindFrameFrequency);
+	public static native void setEnableRewind(final boolean enableRewind);
 	
 	public static native void resetGame();
 	

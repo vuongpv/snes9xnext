@@ -1,5 +1,8 @@
 /**
- * GENPlusDroid
+ * HAL EMU FRAMEWORK
+ *
+ * SEE LICENSE FILE FOR LICENSE INFO
+ *
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
@@ -14,6 +17,7 @@
 #define COMMON_H_
 
 #include <android/log.h>
+
 #include <time.h>
 
 #define NATIVE_OK 0x0;
@@ -22,11 +26,16 @@
 #define MAX_PATH 1024
 
 // LOGGING
-#define LOG_TAG "SNESDroidNative"
+//#define LOG_TAG "NESDroidNative"
 #ifdef ANDROID
 #  define QUOTEME_(x) #x
 #  define QUOTEME(x) QUOTEME_(x)
+
+#ifdef DEBUG_LOGGING
 #  define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, " (" __FILE__ ":" QUOTEME(__LINE__) ") "__VA_ARGS__)
+#else
+#  define LOGD(...)
+#endif
 #  define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #  define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #else
@@ -69,6 +78,20 @@ static double now_ms(void)
     struct timespec res;
     clock_gettime(CLOCK_REALTIME_HR, &res);
     return 1000.0*res.tv_sec + (double)res.tv_nsec/1e6;
+}
+
+
+// thanks Maister!
+static inline uint32_t next_pow2(uint32_t v)
+{
+   v--;
+   v |= v >> 1;
+   v |= v >> 2;
+   v |= v >> 4;
+   v |= v >> 8;
+   v |= v >> 16;
+   v++;
+   return v;
 }
 
 

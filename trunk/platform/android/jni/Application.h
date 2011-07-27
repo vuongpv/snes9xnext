@@ -22,6 +22,12 @@ extern "C"
 
 #define TURBO_FRAMES_TO_EMULATE 16
 
+#define SNES_RENDER_TEXTURE_WIDTH  256.0
+#define SNES_RENDER_TEXTURE_HEIGHT 224.0
+#define SCREEN_RENDER_TEXTURE_WIDTH  512.0
+#define SCREEN_RENDER_TEXTURE_HEIGHT 512.0
+#define SCREEN_RENDER_BYTE_BY_PIXEL  4
+
 // SNES buttons
 #define BTN_A 1
 #define BTN_B 2
@@ -66,12 +72,15 @@ public:
      Application();
      ~Application();
 
-     int init(JNIEnv *env, const char* apkPath, const char* externalStorageDir,
-    		 	 const char* stateDir, const char* sramDir);
+     int init(JNIEnv *env, const char* apkPath);
      int initGraphics();
      int initAudioBuffers(const int sizeInSamples);
      void setAudioSampleRate(int rate);
      void destroy();
+
+     int setPaths(const char* externalStorageDir, const char* romDir,
+                          const char* stateDir, const char* sramDir,
+                          const char* cheatsDir);
 
      void processInput();
 

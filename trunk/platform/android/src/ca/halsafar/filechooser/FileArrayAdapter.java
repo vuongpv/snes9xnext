@@ -17,6 +17,7 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 /**
+ * Based on tutorial from:
  * @author http://www.dreamincode.net/forums/topic/190013-creating-simple-file-chooser/
  *
  */
@@ -103,7 +104,12 @@ public class FileArrayAdapter extends ArrayAdapter<Option> implements SectionInd
 
      public int getPositionForSection(int section)
      {
-          return alphaIndexer.get(sections[section]);
+    	 // TODO - find out why this happens but sometimes it asks for an invalid section
+    	 if (section >= sections.length)
+    	 {
+    		 return 0;
+    	 }
+         return alphaIndexer.get(sections[section]);
      }
 
      public int getSectionForPosition(int position)

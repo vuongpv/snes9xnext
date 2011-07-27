@@ -1,9 +1,11 @@
 /**
- * NESDroid
+ * HAL EMU FRAMEWORK
+ *
+ * SEE LICENSE FILE FOR LICENSE INFO
+ *
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
- *
  */
 #include <string.h>
 
@@ -309,7 +311,6 @@ void InputHandler::setAnalogVisibility(int analogIndex, bool visible)
 
 void InputHandler::setButton(int buttonIndex, int x, int y, float width, float height, int keycode, bool visible)
 {
-     //LOGD("SetButton(%d, %d, %f, %f, %d, %s", x, y, width, height, keycode, visible ? "true" : "false");
      float max = width > height ? width : height;
 
      _buttons[buttonIndex].quad.SetDimensions(x, y, width, height);

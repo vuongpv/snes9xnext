@@ -1,3 +1,12 @@
+/**
+ * HALSAFAR DownloaderHelpers
+ * 
+ * SEE LICENSE FILE
+ * 	Free to use, non-commercial license.
+ * 
+ * Copyright 2011 - Stephen Damm (shinhalsafar@gmail.com)
+ */
+
 package ca.halsafar.downloader;
 
 import java.io.FileInputStream;

@@ -2,6 +2,7 @@ package ca.halsafar.filechooser;
 
 
 /**
+ * Based on:
  * @author http://www.dreamincode.net/forums/topic/190013-creating-simple-file-chooser/
  *
  */

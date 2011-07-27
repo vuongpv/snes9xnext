@@ -1,3 +1,12 @@
+/**
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
+ * Copyright 2011 Stephen Damm (Halsafar)
+ * All rights reserved.
+ * shinhalsafar@gmail.com
+ */
 package ca.halsafar.snesdroid;
 
 import android.content.Context;
@@ -6,6 +15,11 @@ import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+/**
+ * Wrapped used to help manage the android shared preferences
+ * 
+ * @author halsafar
+ */
 public class InputPreferences
 {
      private static final String LOG_TAG = "InputPreferences";

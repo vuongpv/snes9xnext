@@ -1,10 +1,12 @@
 /**
- * NESDroid
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
  */
-
 package ca.halsafar.snesdroid;
 
 import java.io.File;
@@ -29,9 +31,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -47,8 +46,7 @@ public class MainActivity extends Activity
                     
      //private boolean _useAudio = false; 
      private boolean _init = false;         
-     private String _externalStorageDir = "";
-             
+            
 
      @Override
      public void onCreate(Bundle savedInstanceState)
@@ -72,19 +70,18 @@ public class MainActivity extends Activity
 
           if (Environment.MEDIA_MOUNTED.equals(state))
           {
-              // We can read and write the media
+              // rw access
               mExternalStorageAvailable = mExternalStorageWriteable = true;
           } 
           else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state))
           {
-              // We can only read the media
+              // r access
               mExternalStorageAvailable = true;
               mExternalStorageWriteable = false;
           }
           else 
           {
-              // Something else is wrong. It may be one of many other states, but all we need
-              //  to know is we can neither read nor write
+              // no access
               mExternalStorageAvailable = mExternalStorageWriteable = false;
           }
           
@@ -126,7 +123,6 @@ public class MainActivity extends Activity
           {                                                                                     
                // always try and make application dirs
                String extStorageDirectory = Environment.getExternalStorageDirectory().toString();
-               _externalStorageDir  = extStorageDirectory;
                
                File myNewFolder = new File(extStorageDirectory + PreferenceFacade.DEFAULT_DIR);
                if (!myNewFolder.exists())
@@ -170,7 +166,7 @@ public class MainActivity extends Activity
                if (firstRun)
                {                          
                     // default input                                        
-                    PreferenceFacade.resetInput(getApplicationContext());                    
+                    EmulatorButtons.resetInput(this, getApplicationContext());                    
                     
                     // remove first run flag
                     Editor edit = preferences.edit();
@@ -202,17 +198,17 @@ public class MainActivity extends Activity
                String _apkPath = appInfo.sourceDir;                                                       
 
                // init the emulator
-               Context context = getApplicationContext();
-               Emulator.init(_apkPath, 
-                              Environment.getExternalStorageDirectory() + PreferenceFacade.DEFAULT_DIR,
-                              PreferenceFacade.getRomDir(context), 
-                              PreferenceFacade.getStateDir(context),
-                              PreferenceFacade.getSramDir(context),
-                              PreferenceFacade.getCheatsDir(context)
-                             );         
+               Emulator.init(_apkPath);
+               
+               // set the paths
+               Emulator.setPaths(extStorageDirectory + PreferenceFacade.DEFAULT_DIR,
+            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_ROMS, 
+            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_STATES,
+            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_SRAM, 
+            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_CHEATS);
 
                // load up prefs now, never again unless they change
-               PreferenceFacade.loadPrefs(getApplicationContext());                   
+               //PreferenceFacade.loadPrefs(this, getApplicationContext());                   
                
                // load gui
                Log.d(LOG_TAG, "Done init()");
@@ -324,7 +320,7 @@ public class MainActivity extends Activity
           
           // clean temp dir or all files, just files for now
           // @TODO - full clean
-          File tempFolder = new File(_externalStorageDir + PreferenceFacade.DEFAULT_DIR_TEMPFILES + "/");
+          File tempFolder = new File(Environment.getExternalStorageDirectory().toString() + PreferenceFacade.DEFAULT_DIR_TEMPFILES + "/");
           if (tempFolder.exists())
           {
                String[] children = tempFolder.list();
@@ -344,31 +340,7 @@ public class MainActivity extends Activity
           System.gc();
      }
 
-     
-     @Override
-     public boolean onCreateOptionsMenu(Menu myMenu)
-     {
-          MenuInflater inflater = getMenuInflater();
-          inflater.inflate(R.menu.main, myMenu);
-          
-          return true;          
-     }
-     
-
-     @Override
-     public boolean onOptionsItemSelected(MenuItem item)
-     {
-          switch (item.getItemId())
-          {
-               case R.id.menuExit:
-                    this.finish();
-                    return true;               
-               default:
-                   return super.onOptionsItemSelected(item);
-          }          
-     }
-     
-     
+         
      protected void spawnEmulatorActivity()
      {
           Intent myIntent = new Intent(MainActivity.this, EmulatorActivity.class);
@@ -409,13 +381,14 @@ public class MainActivity extends Activity
           }
           else if (requestCode == PreferenceFacade.MENU_SETTINGS)
           {
-               PreferenceFacade.loadPrefs(getApplicationContext());
+               //PreferenceFacade.loadPrefs(this, getApplicationContext());
           }
           else if (requestCode == PreferenceFacade.MENU_ROM_SELECT)
           {
                String romFile=data.getStringExtra(FileChooser.PAYLOAD_FILENAME);
                if (romFile != null)
-               {                   
+               {                 
+            	   PreferenceFacade.loadPrefs(this, getApplicationContext());
                     if (Emulator.loadRom(romFile) == 0)
                     {
                          // AutoLoad

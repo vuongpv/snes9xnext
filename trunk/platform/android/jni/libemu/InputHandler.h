@@ -1,15 +1,12 @@
 /**
- * NESDroid
+ * HAL EMU FRAMEWORK
+ *
+ * SEE LICENSE FILE FOR LICENSE INFO
+ *
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
- *
- * InputHandler.h
- *
- *  Created on: 2011-04-29
- *      Author: halsafar
  */
-
 #ifndef INPUTHANDLER_H_
 #define INPUTHANDLER_H_
 

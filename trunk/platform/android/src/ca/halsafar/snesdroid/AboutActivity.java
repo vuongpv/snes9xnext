@@ -59,7 +59,7 @@ public class AboutActivity extends Activity
           seeAlso.setMovementMethod(LinkMovementMethod.getInstance());
           
           seeAlso = (TextView) findViewById(R.id.aboutSeeAlsoGen);
-          text = "<a href=\"market://search?q=pname:ca.halsafar.genesisdroid\">See Also: GENPlusDroid</a>";          
+          text = "<a href=\"market://search?q=pname:ca.halsafar.snesdroid\">See Also: GENPlusDroid</a>";          
           seeAlso.setText(Html.fromHtml(text.toString())); 
           seeAlso.setMovementMethod(LinkMovementMethod.getInstance());          
      }

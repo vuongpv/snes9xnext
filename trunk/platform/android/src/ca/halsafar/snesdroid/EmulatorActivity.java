@@ -1,5 +1,8 @@
 /**
- * NESDroid
+ * ANDROID EMUFRAMEWORK
+ * 
+ * SEE LICENSE FILE FOR LICENSE INFO
+ * 
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com
@@ -9,6 +12,7 @@ package ca.halsafar.snesdroid;
 
 import ca.halsafar.audio.AudioPlayer;
 import ca.halsafar.filechooser.FileChooser;
+import ca.halsafar.snesdroid.Emulator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -17,7 +21,6 @@ import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -111,36 +114,7 @@ public class EmulatorActivity extends Activity
           super.onStop();
      }
 
-
-     @Override
-     public boolean onKeyUp(int keyCode, KeyEvent event)
-     {
-          if (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
-                    keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                    keyCode == KeyEvent.KEYCODE_MENU)
-               return super.onKeyUp(keyCode, event);
-
-          Emulator.onKeyUp(event.getKeyCode());
-
-          return true;
-          // return super.onKeyUp(keyCode, event);
-     }
-
-
-     @Override
-     public boolean onKeyDown(int keyCode, KeyEvent event)
-     {
-          if (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
-                    keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                    keyCode == KeyEvent.KEYCODE_MENU)
-               return super.onKeyUp(keyCode, event);
-
-          Emulator.onKeyDown(event.getKeyCode());
-
-          return true;
-     }
-
-
+     
      @Override
      public boolean onOptionsItemSelected(MenuItem item)
      {
@@ -277,7 +251,7 @@ public class EmulatorActivity extends Activity
                {
                     public void run()
                     {
-                         PreferenceFacade.loadPrefs(getApplicationContext());
+                         PreferenceFacade.loadPrefs(EmulatorActivity.this, getApplicationContext());
                     }
                });
           }

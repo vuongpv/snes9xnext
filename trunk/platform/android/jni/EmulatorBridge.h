@@ -10,10 +10,18 @@ extern "C" {
 /*
  * Class:     ca_halsafar_snesdroid_Emulator
  * Method:    init
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_ca_halsafar_snesdroid_Emulator_init
-  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jstring, jstring);
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     ca_halsafar_snesdroid_Emulator
+ * Method:    setPaths
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_ca_halsafar_snesdroid_Emulator_setPaths
+  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jstring);
 
 /*
  * Class:     ca_halsafar_snesdroid_Emulator
@@ -186,10 +194,10 @@ JNIEXPORT void JNICALL Java_ca_halsafar_snesdroid_Emulator_selectState
 /*
  * Class:     ca_halsafar_snesdroid_Emulator
  * Method:    setEnableRewind
- * Signature: (ZII)V
+ * Signature: (Z)V
  */
 JNIEXPORT void JNICALL Java_ca_halsafar_snesdroid_Emulator_setEnableRewind
-  (JNIEnv *, jclass, jboolean, jint, jint);
+  (JNIEnv *, jclass, jboolean);
 
 /*
  * Class:     ca_halsafar_snesdroid_Emulator
