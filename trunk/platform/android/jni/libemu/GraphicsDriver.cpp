@@ -382,8 +382,8 @@ void GraphicsDriver::ReshapeEmuTexture(int width, int height, float max)
      _emuHeight = height;
 
 	// texture coordinates
-	float xMax = width / max;
-	float yMax = height / max;
+	float xMax = width / max - (0.001);
+	float yMax = height / max - (0.001);
 
     _texCoords[0] = 0.0; _texCoords[1] =  yMax;
     _texCoords[2] = xMax; _texCoords[3] =  yMax;
