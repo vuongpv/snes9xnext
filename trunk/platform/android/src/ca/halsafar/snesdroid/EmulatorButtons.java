@@ -37,14 +37,27 @@ public enum EmulatorButtons
          float maxSize = (screenWidth > screenHeight ? screenWidth : screenHeight);
 
          float dpadWidth = maxSize * 0.20f;
+         // tablet, reduce dpad defaults
+         if (android.os.Build.VERSION.SDK_INT >= 11)
+         {
+        	 dpadWidth = maxSize * 0.10f;
+         }
          float dpadHeight = dpadWidth;
 
          float dPadX = 0 + maxSize * 0.01f;
          float dPadY = screenHeight - dpadHeight - (maxSize * 0.01f);
 
          float buttonsWidth = maxSize * 0.085f;
-         float buttonsHeight = maxSize * 0.085f;
+         float buttonsHeight = maxSize * 0.085f;   
          float buttonSep = maxSize * 0.010f;
+         
+         // tablet, reduce button defaults
+         if (android.os.Build.VERSION.SDK_INT >= 11)
+         {
+             buttonsWidth = maxSize * 0.045f;
+             buttonsHeight = maxSize * 0.045f;   
+             buttonSep = maxSize * 0.005f;        	 
+         }
          
          float yButtonX = screenWidth - ((buttonsWidth * 3) + buttonSep + (maxSize *0.015f));
          float yButtonY = screenHeight - (buttonsHeight * 2 + (maxSize * 0.01f));
