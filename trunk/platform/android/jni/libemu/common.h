@@ -20,8 +20,8 @@
 
 #include <time.h>
 
-#define NATIVE_OK 0x0;
-#define NATIVE_ERROR 0x1;
+#define NATIVE_OK 0x0
+#define NATIVE_ERROR 0x1
 
 #define MAX_PATH 1024
 

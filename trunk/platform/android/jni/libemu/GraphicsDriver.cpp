@@ -523,9 +523,15 @@ void GraphicsDriver::DrawQuad2D(Quad2D* quad) const
 }
 
 
+void GraphicsDriver::DrawEMU(const void* texture)
+{
+	DrawEMU(texture, _emuWidth, _emuHeight);
+}
+
+
 void GraphicsDriver::DrawEMU(const void *texture, int emuw, int emuh)
 {
-     //LOGD("DrawNES(%p, %d, %d)", XBuf, nesw, nesh);
+     //LOGD("DrawEMU(%p, %d, %d)", texture, emuw, emuh);
 
      //LOGD("BIND TEXTURE");
      glActiveTexture(GL_TEXTURE0);

@@ -71,7 +71,8 @@ public class InputPreferences
      //
      public static int getNumButtons(final Context context)
      {
-          return getNumInput(context, PREF_NUM_BUTTONS);
+          //return getNumInput(context, PREF_NUM_BUTTONS);
+    	 return EmulatorButtons.BUTTON_INDEX_COUNT.ordinal();
      }
 
      public static void setButton(Context context, String textureFile, int buttonIndex)

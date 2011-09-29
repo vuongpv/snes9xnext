@@ -46,6 +46,7 @@ public:
 	void Clear() const;
 	void DrawQuad2D(Quad2D* quad) const;
 	void Draw();
+	void DrawEMU(const void *XBuf);
 	void DrawEMU(const void *XBuf, int emuw, int emuh);
 	void Swap() const;
 	
@@ -55,6 +56,8 @@ public:
 
 	float getScreenWidth() { return _screenWidth; }
 	float getScreenHeight() { return _screenHeight; }
+	float getEmuTextureWidth() { return _emuWidth; }
+	float getEmuTextureHeight() { return _emuHeight; }
 private:
 	int _screenWidth;
 	int _screenHeight;
