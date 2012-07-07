@@ -10,16 +10,13 @@
 
 package ca.halsafar.snesdroid;
 
-import ca.halsafar.audio.AudioPlayer;
+
 import ca.halsafar.filechooser.FileChooser;
 import ca.halsafar.snesdroid.Emulator;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -46,7 +43,7 @@ public class EmulatorActivity extends Activity
           Log.d(LOG_TAG, "onCreate()");
 
           super.onCreate(savedInstanceState);
-
+         
           // start displaying
           _view = new EmulatorView(this, getApplication());
           setContentView(_view);
@@ -56,10 +53,20 @@ public class EmulatorActivity extends Activity
      @Override
      public boolean onCreateOptionsMenu(Menu myMenu)
      {
-          MenuInflater inflater = getMenuInflater();
-          inflater.inflate(R.menu.emulator, myMenu);
+    	 Log.d(LOG_TAG, "onCreateOptionsMenu(" + myMenu + ")");
+    	 
+    	 _view.queueEvent(new Runnable()
+         {
+              public void run()
+              {
+            	  Emulator.onPause();
+              }
+         });
+    	     	 
+         MenuInflater inflater = getMenuInflater();
+         inflater.inflate(R.menu.emulator, myMenu);
 
-          return true;
+         return true;
      }
 
 
@@ -70,13 +77,30 @@ public class EmulatorActivity extends Activity
 
           Log.d(LOG_TAG, "onResume()");
 
-          SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-          boolean audio = prefs.getBoolean(PreferenceFacade.PREF_ENABLE_AUDIO, true);
-          if (audio)
+          // force orientation
+          int orientation = Integer.valueOf(ConfigXML.getNodeAttribute(ConfigXML.PREF_ORIENTATION, "value"));          
+          if (orientation == 0)
           {
-               AudioPlayer.resume();
+        	  setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
           }
+          else if (orientation == 1)
+          {
+        	  setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+          }
+          else
+          {
+        	  setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+          }          
+          
+     	 _view.queueEvent(new Runnable()
+         {
 
+              public void run()
+              {
+            	  Emulator.onResume();
+              }
+         });
+     	 
           _view.onResume();
 
           // help android out a bit... seems to be slow at releasing sometimes
@@ -91,11 +115,18 @@ public class EmulatorActivity extends Activity
 
           super.onPause();
 
-          AudioPlayer.pause();
+      	 _view.queueEvent(new Runnable()
+         {
+
+              public void run()
+              {
+            	  Emulator.onPause();
+              }
+         });
 
           _view.onPause();
 
-          PreferenceFacade.DoAutoSave(getApplicationContext());
+          SettingsFacade.DoAutoSave();
      }
 
 
@@ -118,6 +149,14 @@ public class EmulatorActivity extends Activity
      @Override
      public boolean onOptionsItemSelected(MenuItem item)
      {
+    	 _view.queueEvent(new Runnable()
+         {
+              public void run()
+              {
+            	  Emulator.onResume();
+              }
+         });
+    	 
           switch (item.getItemId())
           {
                /*
@@ -157,13 +196,12 @@ public class EmulatorActivity extends Activity
                     Emulator.resetGame();
                     return true;
                case R.id.menuSelectShader:
-                    Intent myIntent = new Intent(EmulatorActivity.this,
-                              FileChooser.class);
-                    myIntent.putExtra(FileChooser.EXTRA_START_DIR,
-                                      PreferenceFacade.getShaderDir(getApplicationContext()));
-                    myIntent.putExtra(FileChooser.EXTRA_EXTENSIONS,
-                              PreferenceFacade.DEFAULT_SHADER_EXTENSIONS);
-                    final int result = PreferenceFacade.MENU_SHADER_SELECT;
+            	   	String shaderDir = ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_SHADERS, "value");
+            	   
+                    Intent myIntent = new Intent(EmulatorActivity.this, FileChooser.class);
+                    myIntent.putExtra(FileChooser.EXTRA_START_DIR, shaderDir);
+                    myIntent.putExtra(FileChooser.EXTRA_EXTENSIONS, SettingsFacade.DEFAULT_SHADER_EXTENSIONS);
+                    final int result = SettingsFacade.MENU_SHADER_SELECT;
                     startActivityForResult(myIntent, result);
                     return true;
                case R.id.menuResetShader:
@@ -172,13 +210,15 @@ public class EmulatorActivity extends Activity
 
                          public void run()
                          {
-                              SharedPreferences prefs = PreferenceManager
-                                        .getDefaultSharedPreferences(getApplicationContext());
-                              Editor edit = prefs.edit();
-                              edit.putString(PreferenceFacade.PREF_SHADER_FILE, null);
-                              edit.commit();
-
-                              Emulator.setShaderFile(null);
+                        	 ConfigXML.setNodeAttribute(ConfigXML.PREF_SHADER_FILE, "value", "");
+                        	 ConfigXML.writeConfigXML();
+                        	 Emulator.processGraphicsConfig();
+                        	 /*_view.queueEvent(new Runnable() {							
+ 							@Override
+ 							public void run() {
+ 								Emulator.processGraphicsConfig();
+ 							}
+ 						}); */   
                          }
                     });
                     return true;
@@ -215,19 +255,23 @@ public class EmulatorActivity extends Activity
                default:
                     return super.onOptionsItemSelected(item);
           }
+          
+          
      }
 
 
      protected void spawnFileChooser()
      {
+    	 String romDir = ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_ROMS, "value");
+    	 String tempDir = ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_TEMP, "value");
+    	 
           // spawn the file chooser
-          Context context = getApplicationContext();
           Intent myIntent = new Intent(EmulatorActivity.this, FileChooser.class);
-          myIntent.putExtra(FileChooser.EXTRA_START_DIR, PreferenceFacade.getRomDir(context));
-          myIntent.putExtra(FileChooser.EXTRA_EXTENSIONS, PreferenceFacade.DEFAULT_ROM_EXTENSIONS);
-          myIntent.putExtra(FileChooser.EXTRA_TEMP_DIR, PreferenceFacade.getTempDir(context));
-          final int result = PreferenceFacade.MENU_ROM_SELECT;
-          startActivityForResult(myIntent, result);
+          myIntent.putExtra(FileChooser.EXTRA_START_DIR, romDir);
+          myIntent.putExtra(FileChooser.EXTRA_EXTENSIONS, SettingsFacade.DEFAULT_ROM_EXTENSIONS);
+          myIntent.putExtra(FileChooser.EXTRA_TEMP_DIR, tempDir);
+          final int result=SettingsFacade.MENU_ROM_SELECT;
+          startActivityForResult(myIntent, result);             
      }
 
 
@@ -235,7 +279,7 @@ public class EmulatorActivity extends Activity
      {
           // spawn the file chooser
           Intent myIntent = new Intent(EmulatorActivity.this, SettingsActivity.class);
-          final int result = PreferenceFacade.MENU_SETTINGS;
+          final int result = SettingsFacade.MENU_SETTINGS;
           startActivityForResult(myIntent, result);
      }
 
@@ -245,17 +289,17 @@ public class EmulatorActivity extends Activity
      {
           Log.d(LOG_TAG, "onActivityResult(" + requestCode + ", " + resultCode + ")");
 
-          if (requestCode == PreferenceFacade.MENU_SETTINGS)
+          if (requestCode == SettingsFacade.MENU_SETTINGS)
           {
                _view.queueEvent(new Runnable()
                {
                     public void run()
                     {
-                         PreferenceFacade.loadPrefs(EmulatorActivity.this, getApplicationContext());
+                         Emulator.processConfig();                                             
                     }
                });
           }
-          else if (requestCode == PreferenceFacade.MENU_ROM_SELECT)
+          else if (requestCode == SettingsFacade.MENU_ROM_SELECT)
           {
                String romFile = data.getStringExtra("Filename");
                if (romFile != null)
@@ -265,22 +309,30 @@ public class EmulatorActivity extends Activity
                          finish();
                     }
 
-                    PreferenceFacade.DoAutoLoad(getApplicationContext());
+                    SettingsFacade.DoAutoLoad();
                }
           }
-          else if (requestCode == PreferenceFacade.MENU_SHADER_SELECT)
+          else if (requestCode == SettingsFacade.MENU_SHADER_SELECT)
           {
                String shaderFile = data
                          .getStringExtra(FileChooser.PAYLOAD_FILENAME);
 
                Log.d(LOG_TAG, "Shader Selected: " + shaderFile);
 
-               SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-               Editor edit = prefs.edit();
-               edit.putString(PreferenceFacade.PREF_SHADER_FILE, shaderFile);
-               edit.commit();
+               if (shaderFile != null)
+               {
+            	   String shaderFileName = shaderFile.substring(0, shaderFile.lastIndexOf('.'));               
+            	   ConfigXML.setNodeAttribute(ConfigXML.PREF_SHADER_FILE, "value", shaderFileName);
+            	   ConfigXML.writeConfigXML();
+            	   _view.queueEvent(new Runnable()
+                   {
 
-               Emulator.setShaderFile(shaderFile);
+                        public void run()
+                        {
+                        	Emulator.processGraphicsConfig();
+                        }
+                   });
+               }
           }
      }
 

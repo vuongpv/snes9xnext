@@ -14,6 +14,7 @@ import ca.halsafar.snesdroid.Emulator;
 import ca.halsafar.snesdroid.R;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -192,7 +193,6 @@ public class FileChooser extends Activity implements DecompressListener
                          int arg2, long arg3)
                {
                     int pos = arg0.getPositionForView(arg1);
-                    // TODO Auto-generated method stub
                     //super.onListItemClick(l, v, position, id);
                     Option o = adapter.getItem(pos);
                     if(o.getData().equalsIgnoreCase("folder")||o.getData().equalsIgnoreCase("parent directory"))
@@ -220,6 +220,10 @@ public class FileChooser extends Activity implements DecompressListener
                               // treat this like a zip file system
                               fillFromZip(path);
                          }
+                         else if (ext.matches("7z"))
+                         {
+                        	 fillFrom7Zip(path);
+                         }
                          else
                          {                              
                               onFileClick(o);
@@ -228,6 +232,81 @@ public class FileChooser extends Activity implements DecompressListener
                }
                
           });
+     }
+     
+
+     
+     private void fillFrom7Zip(final String zipFile)
+     {
+    	 Log.d(LOG_TAG, "fillFrom7Zip(" + zipFile + ")");
+    	 
+    	 String[] dirs = new String[2048];
+    	 ZipFileType[] files = new ZipFileType[2048];
+    	 
+    	 
+    	 Emulator.parse7Zip(zipFile, dirs, files);
+    	 
+         List<Option>dir = new ArrayList<Option>();
+         List<Option>fls = new ArrayList<Option>();  
+    	 
+    	 for (int i = 0; i < dirs.length; i++)
+    	 {
+    		 if (dirs[i] != null)
+    		 {
+    			 //Log.d(LOG_TAG, "fillFrom7Zip dirs[" + i + "]: " + dirs[i]);
+    			 dir.add(new Option(dirs[i], ""+0, ""+0));
+    		 }
+    	 }
+    	 
+    	 for (int i = 0; i < files.length; i++)
+    	 {
+    		 if (files[i] != null)
+    		 {
+    			 //Log.d(LOG_TAG, "fillFrom7Zip files[" + i + "]: " + files[i]);
+    			 fls.add(new Option(files[i].name, String.valueOf(files[i].size), String.valueOf(files[i].pos)));
+    		 }
+    	 }   
+    	 
+    	 Collections.sort(dir);
+         Collections.sort(fls);
+         dir.addAll(fls);  
+         
+         adapter = new FileArrayAdapter(FileChooser.this,R.layout.file_view,dir);
+         _view.setAdapter(adapter);
+         
+         _view.setOnItemClickListener(new OnItemClickListener()
+         {
+
+              public void onItemClick(AdapterView<?> arg0, View arg1,
+                        int arg2, long arg3)
+              {
+                   int pos = arg0.getPositionForView(arg1);
+                   final Option o = adapter.getItem(pos);
+                   
+                   final ProgressDialog dialog = ProgressDialog.show(FileChooser.this, "Loading", "Please wait...", true);
+                   dialog.show();
+                   (new Thread(new Runnable()
+                   {					
+						@Override
+						public void run()
+						{
+		                   Log.d(LOG_TAG, "7z unzip attempt on: " + o.getPath());
+		                   if (Emulator.unzip7ZFile(zipFile, Integer.valueOf(o.getPath()), o.getName(), _tempDir + "/" + o.getName()) == 0)
+		                   {      
+		                	   FileChooser.this.runOnUiThread(new Runnable() {								
+								@Override
+								public void run() {
+									dialog.hide();
+			                	   Option newO = new Option(o.getName(), o.getData(), _tempDir + "/" + o.getName());
+			                	   onFileClick(newO);
+								}
+		                	   });
+		                   }
+					}
+                   })).start();
+              }
+              
+         });                   	 
      }
      
      
@@ -277,10 +356,11 @@ public class FileChooser extends Activity implements DecompressListener
                          int pos = arg0.getPositionForView(arg1);
                          Option o = adapter.getItem(pos);
                                       
-                         Emulator.unzipFile(o.getPath(), o.getName(), _tempDir + "/" + o.getName());
-                         
-                         Option newO = new Option(o.getName(), o.getData(), _tempDir + "/" + o.getName());
-                         onFileClick(newO);                                                  
+                         if (Emulator.unzipFile(o.getPath(), o.getName(), _tempDir + "/" + o.getName()) == 0)
+                         {
+                             Option newO = new Option(o.getName(), o.getData(), _tempDir + "/" + o.getName());
+                             onFileClick(newO);                        	 
+                         }                                                                         
                     }
                     
                });               

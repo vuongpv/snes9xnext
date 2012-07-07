@@ -178,50 +178,50 @@
 #ifndef _MEMMAP_H_
 #define _MEMMAP_H_
 
+#define ROM_NAME_LEN	23
+
 #define MEMMAP_BLOCK_SIZE	(0x1000)
 #define MEMMAP_NUM_BLOCKS	(0x1000000 / MEMMAP_BLOCK_SIZE)
 #define MEMMAP_SHIFT		(12)
-#define MEMMAP_MASK			(MEMMAP_BLOCK_SIZE - 1)
+#define MEMMAP_MASK		(MEMMAP_BLOCK_SIZE - 1)
 
-struct CMemory
+#define MAP_CPU			0
+#define MAP_PPU			1
+#define MAP_LOROM_SRAM		2
+#define MAP_LOROM_SRAM_B	3
+#define MAP_HIROM_SRAM		4
+#define MAP_DSP			5
+#define MAP_SA1RAM		6
+#define MAP_BWRAM		7
+#define MAP_BWRAM_BITMAP	8
+#define MAP_BWRAM_BITMAP2	9
+#define MAP_SPC7110_ROM		10
+#define MAP_SPC7110_DRAM	11
+#define MAP_RONLY_SRAM		12
+#define MAP_C4			13
+#define MAP_OBC_RAM		14
+#define MAP_SETA_DSP		15
+#define MAP_SETA_RISC		16
+#define MAP_BSX			17
+#define MAP_NONE		18
+#define MAP_LAST		19
+
+#define MAX_ROM_SIZE 0x800000
+
+#define FILE_ZIP 0
+#define FILE_DEFAULT 1
+
+#define NOPE 0
+#define YEAH 1
+#define BIGFIRST 2
+#define SMALLFIRST 3
+
+#define MAP_TYPE_I_O 0
+#define MAP_TYPE_ROM 1
+#define MAP_TYPE_RAM 2
+
+typedef struct
 {
-	enum
-	{ MAX_ROM_SIZE = 0x800000 };
-
-	enum file_formats
-	{ FILE_ZIP, FILE_JMA, FILE_DEFAULT };
-
-	enum
-	{ NOPE, YEAH, BIGFIRST, SMALLFIRST };
-
-	enum
-	{ MAP_TYPE_I_O, MAP_TYPE_ROM, MAP_TYPE_RAM };
-
-	enum
-	{
-		MAP_CPU,
-		MAP_PPU,
-		MAP_LOROM_SRAM,
-		MAP_LOROM_SRAM_B,
-		MAP_HIROM_SRAM,
-		MAP_DSP,
-		MAP_SA1RAM,
-		MAP_BWRAM,
-		MAP_BWRAM_BITMAP,
-		MAP_BWRAM_BITMAP2,
-		MAP_SPC7110_ROM,
-		MAP_SPC7110_DRAM,
-		MAP_RONLY_SRAM,
-		MAP_C4,
-		MAP_OBC_RAM,
-		MAP_SETA_DSP,
-		MAP_SETA_RISC,
-		MAP_BSX,
-		MAP_NONE,
-		MAP_LAST
-	};
-
-	uint8	NSRTHeader[32];
 	int32	HeaderCount;
 
 	uint8	*RAM;
@@ -253,7 +253,6 @@ struct CMemory
 	uint32	ROMChecksum;
 	uint32	ROMComplementChecksum;
 	uint32	ROMCRC32;
-	int32	ROMFramesPerSecond;
 
 	bool8	HiROM;
 	bool8	LoROM;
@@ -262,125 +261,46 @@ struct CMemory
 	uint32	CalculatedSize;
 	uint32	CalculatedChecksum;
 
-	// ports can assign this to perform some custom action upon loading a ROM (such as adjusting controls)
-	void	(*PostRomInitFunc) (void);
+} CMemory;
 
-	bool8	Init (void);
-	void	Deinit (void);
+bool8	Init (void);
+void	Deinit (void);
 
-	int		ScoreHiROM (bool8, int32 romoff = 0);
-	int		ScoreLoROM (bool8, int32 romoff = 0);
-	uint32	HeaderRemove (uint32, int32 &, uint8 *);
-	uint32	FileLoader (uint8 *, const char *, int32);
-	bool8	LoadROM (const char *);
-	bool8	LoadMultiCart (const char *, const char *);
-	bool8	LoadSufamiTurbo (const char *, const char *);
-	bool8	LoadSameGame (const char *, const char *);
-	bool8	LoadSRAM (const char *);
-	bool8	SaveSRAM (const char *);
-	void	ClearSRAM (bool8 onlyNonSavedSRAM = 0);
-	bool8	LoadSRTC (void);
-	bool8	SaveSRTC (void);
+bool8 LoadROM (const char *filename);
+bool8 LoadMultiCart (const char *cartA, const char *cartB);
+bool8 LoadSufamiTurbo (const char *cartA, const char *cartB);
+bool8 LoadSameGame (const char *cartA, const char *cartB);
+bool8 LoadSRAM (const char *filename);
+bool8 SaveSRAM (const char *filename);
 
-	char *	Safe (const char *);
-	char *	SafeANK (const char *);
-	void	ParseSNESHeader (uint8 *);
-	void	InitROM (void);
+void	InitROM (void);
 
-	uint32	map_mirror (uint32, uint32);
-	void	map_lorom (uint32, uint32, uint32, uint32, uint32);
-	void	map_hirom (uint32, uint32, uint32, uint32, uint32);
-	void	map_lorom_offset (uint32, uint32, uint32, uint32, uint32, uint32);
-	void	map_hirom_offset (uint32, uint32, uint32, uint32, uint32, uint32);
-	void	map_space (uint32, uint32, uint32, uint32, uint8 *);
-	void	map_index (uint32, uint32, uint32, uint32, int, int);
-	void	map_System (void);
-	void	map_WRAM (void);
-	void	map_LoROMSRAM (void);
-	void	map_HiROMSRAM (void);
-	void	map_DSP (void);
-	void	map_C4 (void);
-	void	map_OBC1 (void);
-	void	map_SetaRISC (void);
-	void	map_SetaDSP (void);
-	void	map_WriteProtectROM (void);
-	void	Map_Initialize (void);
-	void	Map_LoROMMap (void);
-	void	Map_NoMAD1LoROMMap (void);
-	void	Map_JumboLoROMMap (void);
-	void	Map_ROM24MBSLoROMMap (void);
-	void	Map_SRAM512KLoROMMap (void);
-	void	Map_SufamiTurboLoROMMap (void);
-	void	Map_SufamiTurboPseudoLoROMMap (void);
-	void	Map_SuperFXLoROMMap (void);
-	void	Map_SetaDSPLoROMMap (void);
-	void	Map_SDD1LoROMMap (void);
-	void	Map_SA1LoROMMap (void);
-	void	Map_HiROMMap (void);
-	void	Map_ExtendedHiROMMap (void);
-	void	Map_SameGameHiROMMap (void);
-	void	Map_SPC7110HiROMMap (void);
+void	map_WriteProtectROM (void);
 
-	uint16	checksum_calc_sum (uint8 *, uint32);
-	uint16	checksum_mirror_sum (uint8 *, uint32 &, uint32 mask = 0x800000);
-	void	Checksum_Calculate (void);
-
-	bool8	match_na (const char *);
-	bool8	match_nn (const char *);
-	bool8	match_nc (const char *);
-	bool8	match_id (const char *);
-	void	ApplyROMFixes (void);
-	void	CheckForAnyPatch (const char *, bool8, int32 &);
-
-	void	MakeRomInfoText (char *);
-
-	const char *	MapType (void);
-	const char *	StaticRAMSize (void);
-	const char *	Size (void);
-	const char *	Revision (void);
-	const char *	KartContents (void);
-	const char *	Country (void);
-	const char *	PublishingCompany (void);
-};
+uint32 HeaderRemove (uint32 size, int32 * headerCount, uint8 *buf);
 
 struct SMulti
 {
-	int		cartType;
-	int32	cartSizeA, cartSizeB;
-	int32	sramSizeA, sramSizeB;
-	uint32	sramMaskA, sramMaskB;
-	uint32	cartOffsetA, cartOffsetB;
-	uint8	*sramA, *sramB;
-	char	fileNameA[PATH_MAX + 1], fileNameB[PATH_MAX + 1];
+	int	cartType;
+	int32	cartSizeA;
+	int32	cartSizeB;
+	int32	sramSizeA;
+	int32	sramSizeB;
+	uint32	sramMaskA;
+	uint32	sramMaskB;
+	uint32	cartOffsetA;
+	uint32	cartOffsetB;
+	uint8	*sramA;
+	uint8	*sramB;
+	char	fileNameA[PATH_MAX + 1];
+	char	fileNameB[PATH_MAX + 1];
 };
 
 extern CMemory	Memory;
-extern SMulti	Multi;
+extern struct SMulti	Multi;
 
-#if defined(ZSNES_FX) || defined(ZSNES_C4)
-START_EXTERN_C
-extern uint8	*ROM;
-extern uint8	*SRAM;
-extern uint8	*RegRAM;
-END_EXTERN_C
-#endif
-
-void S9xAutoSaveSRAM (void);
-bool8 LoadZip(const char *, int32 *, int32 *, uint8 *);
-
-enum s9xwrap_t
-{
-	WRAP_NONE,
-	WRAP_BANK,
-	WRAP_PAGE
-};
-
-enum s9xwriteorder_t
-{
-	WRITE_01,
-	WRITE_10
-};
-
-#include "getset.h"
+#define WRAP_PAGE 0xFF
+#define WRAP_BANK 0xFFFF
+#define WRAP_NONE 0xFFFFFF
 
 #endif

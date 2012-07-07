@@ -10,13 +10,12 @@
 
 package ca.halsafar.snesdroid;
 
+import org.w3c.dom.NodeList;
+
 import android.app.ListActivity;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -24,11 +23,13 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -36,6 +37,7 @@ import android.widget.TextView;
 class KeyBinding
 {
      String name;
+     String xpath;
      int key;
      boolean adjusting;
      
@@ -48,7 +50,8 @@ class KeyBinding
 
 class KeyBindingAdapter extends ArrayAdapter<KeyBinding>
 {
-
+	//private static final String LOG_TAG = "KeyBindingAdapter";
+	
 	// used to keep selected position in ListView
 	private int selectedPos = -1;	// init value for not-selected
 
@@ -81,7 +84,8 @@ class KeyBindingAdapter extends ArrayAdapter<KeyBinding>
 	    }
 
 	    // get text view
-        TextView label = (TextView)v.findViewById(R.id.txtExample);
+        TextView label = (TextView)v.findViewById(R.id.txtKeyCode);        
+        Button btn = (Button)v.findViewById(R.id.btnUnmap);
 
         // change the row color based on selected state
         String extra = "";
@@ -90,16 +94,17 @@ class KeyBindingAdapter extends ArrayAdapter<KeyBinding>
         	label.setBackgroundColor(R.color.orange);
         	v.setBackgroundColor(Color.RED);
         	extra = " (Press any button to set new key) ";
+        	btn.setEnabled(true);
         }
         else
         {
         	label.setBackgroundColor(R.color.black);
         	v.setBackgroundColor(Color.BLACK);
+        	btn.setEnabled(false);
         }
 
         label.setText(this.getItem(position).toString() + extra);
-        
-       
+
         return(v);
 	}
 }
@@ -110,48 +115,74 @@ public class KeyboardConfigActivity extends ListActivity
      private static final String LOG_TAG = "KeyboardConfigActivity";
 
      private int _modPos = -1;
-     private int _modKeyCode = -1;
      
      private ListView _view = null;
      private KeyBindingAdapter _adapter;
      
-
+     
+     @Override
      public void onCreate(Bundle state)
      {
-          super.onCreate(state);
+          super.onCreate(state);       
+     }
+     
+     
+     @Override
+     public void onStart()
+     {
+    	 loadButtonsFromConfig();
 
-          // reset input, first load bug...
-          SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-          if (prefs.getBoolean(PreferenceFacade.PREF_USE_DEFAULT_INPUT, true))
-          {
-        	  EmulatorButtons.resetInput(this, getApplicationContext());
-              
-              Editor edit = prefs.edit();               
-              edit.putBoolean(PreferenceFacade.PREF_USE_DEFAULT_INPUT, false);
-              edit.commit();                       	  
-          }
-          
-          reloadButtons();
+         _view = getListView();
+         _view.setClickable(true);
 
-          _view = getListView();
-
-          _view.setOnItemClickListener(new OnItemClickListener()
-          {
-               public void onItemClick(AdapterView<?> parent, View view,
-                         int position, long id)
-               {
-            	   Log.d(LOG_TAG, "onItemClick(" + parent + ", " + view + ", " + position + ", " + id + ")");
-            	   
-                    _modPos = position; 
-                                        
-                    int pos = parent.getPositionForView(view);
-                    
-                    _adapter.setSelectedPosition(pos);
-               }
-          });
-                    
-          InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-          mgr.showInputMethodPicker();          
+         _view.setOnItemClickListener(new OnItemClickListener()
+         {
+              public void onItemClick(AdapterView<?> parent, View view,
+                        int position, long id)
+              {
+           	   	Log.d(LOG_TAG, "onItemClick(" + parent + ", " + view + ", " + position + ", " + id + ")");
+           	   
+           	   	_modPos = position; 
+                                       
+           	   	int pos = parent.getPositionForView(view);
+                   
+           	   	_adapter.setSelectedPosition(pos);
+           	   	
+                Button btn = (Button)view.findViewById(R.id.btnUnmap);
+                btn.setOnClickListener(new OnClickListener() {
+        			@Override
+        			public void onClick(View v) {
+        				Log.d(LOG_TAG, "UNMAP ONCLICK");
+        				
+        	      		KeyBinding key = _adapter.getItem(_modPos);
+        	      		key.key = 0;
+        	      		ConfigXML.setNodeAttribute(key.xpath, "keycode", ""+0);
+        	           
+        	      		_adapter.notifyDataSetChanged();	    
+        	           
+        	      		_modPos = -1;
+        	           
+        	      		_adapter.setSelectedPosition(-1);        				
+        			}
+        		});
+              }
+         });
+                   
+         InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+         mgr.showInputMethodPicker();   
+         
+         super.onStart();
+     }
+     
+     
+     @Override
+     public void onStop()
+     {
+    	 Log.d(LOG_TAG, "onStop()");
+    	 
+    	 ConfigXML.writeConfigXML();
+    	 
+    	 super.onStart();
      }
      
      
@@ -164,30 +195,42 @@ public class KeyboardConfigActivity extends ListActivity
      }
      
      
-     public void reloadButtons()
+     public void loadButtonsFromConfig()
      {
-          int numButtons = EmulatorButtons.BUTTON_INDEX_COUNT.ordinal();
-          KeyBinding names[] = new KeyBinding[numButtons];
-          for (EmulatorButtons button : EmulatorButtons.values())
-          {
-               if (button.ordinal() != numButtons)
-               {
-                    int keyCode = InputPreferences.getButtonCode(getApplicationContext(), button.ordinal());
-                    
-                    names[button.ordinal()] = new KeyBinding();
-                    names[button.ordinal()].name = button.name();
-                    names[button.ordinal()].key = keyCode;
-                    names[button.ordinal()].adjusting = false;
-               }
-          }
+    	 NodeList padsRoot = ConfigXML.getNodeChildren(ConfigXML.PREF_KEYS_PADS);
+    	 
+    	 // get button count
+    	 int numButtons = 0;
+    	 for (int i = 0; i < padsRoot.getLength(); i++)
+    	 {
+    		 NodeList padButtons = ConfigXML.getNodeChildren(ConfigXML.PREF_KEYS_PADS + "[@id=" + (i+1) + "]/*");
+    		 Log.d(LOG_TAG, "Pad: " + i + " has button count: " + padButtons.getLength());
+    		 
+    		 numButtons += padButtons.getLength();
+    	 }
+    	 
+    	 KeyBinding names[] = new KeyBinding[numButtons];
+    	 int index = 0;
+    	 for (int i = 0; i < padsRoot.getLength(); i++)
+    	 {
+    		 NodeList padButtons = ConfigXML.getNodeChildren(ConfigXML.PREF_KEYS_PADS + "[@id=" + (i+1) + "]/*");
+    		 for (int j = 0; j < padButtons.getLength(); j++)
+    		 {
+    			 String id = padButtons.item(j).getAttributes().getNamedItem("id").getNodeValue();
+    			 
+    			 names[index] = new KeyBinding();
+    			 names[index].xpath = "/app/config/input/keys/pad[@id="+(i+1)+"]/*[@id='"+id+"']"; 
+    			 names[index].name = "PLAYER [" + (i+1) + "]: " + id;
+    			 names[index].key = Integer.valueOf(padButtons.item(j).getAttributes().getNamedItem("keycode").getNodeValue());
+    			 names[index].adjusting = false;
+	    		 	    		 
+	    		 index++;
+    		 }
+    	 }
 
-          /*Toast.makeText(getApplicationContext(),
-                    "States Array lentgh is : " + names.length,
-                    Toast.LENGTH_LONG).show();*/
-          _adapter = new KeyBindingAdapter(this,
-                    						R.layout.custom_key_view,
-                    						names);
-          setListAdapter(_adapter);          
+    	 _adapter = new KeyBindingAdapter(this, R.layout.custom_key_view, names);
+    	 
+    	 setListAdapter(_adapter);
      }
 
 
@@ -205,58 +248,25 @@ public class KeyboardConfigActivity extends ListActivity
     	 
       	if (_modPos >= 0)
       	{
-              Log.d(LOG_TAG, "NewButton: " + event.getKeyCode());
-              _modKeyCode = event.getKeyCode();
-              
-              InputPreferences.setButton(getApplicationContext(), _modKeyCode, _modPos);
+      		Log.d(LOG_TAG, "NewButton: " + event.getKeyCode());
+      		int keyCode = event.getKeyCode();
+            
+      		KeyBinding key = _adapter.getItem(_modPos);
+      		key.key = keyCode;
+      		ConfigXML.setNodeAttribute(key.xpath, "keycode", ""+keyCode);
            
-           reloadButtons();	    
+      		_adapter.notifyDataSetChanged();	    
            
-           _modPos = -1;
-           _modKeyCode = -1;
+      		_modPos = -1;
            
-           _adapter.setSelectedPosition(-1);
-           //_adjustingView.setBackgroundColor(color.black);
+      		_adapter.setSelectedPosition(-1);
            
-           return true;
+      		return true;
       	}          
    
        return super.dispatchKeyEvent(event);    	 
      }
      
-     /*@Override
-     public boolean onKeyDown(int keyCode, KeyEvent event)
-     {
-          Log.d(LOG_TAG, "onKeyDown(" + event + ")");
-
-          if(keyCode == KeyEvent.KEYCODE_VOLUME_UP || 
-                  keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                  keyCode == KeyEvent.KEYCODE_MENU)
-	      	{
-	      		return false;
-	      	}
-	    
-	      	if (_modPos >= 0)
-	      	{
-	              Log.d(LOG_TAG, "NewButton: " + keyCode);
-	              _modKeyCode = keyCode;
-	              
-	              InputPreferences.setButton(getApplicationContext(), _modKeyCode, _modPos);
-                  
-                  reloadButtons();	    
-                  
-                  _modPos = -1;
-                  _modKeyCode = -1;
-                  
-                  _adapter.setSelectedPosition(-1);
-                  //_adjustingView.setBackgroundColor(color.black);
-                  
-                  return true;
-	      	}          
-          
-          return super.onKeyDown(keyCode, event);
-     }*/
-
 
      @Override
      public boolean onCreateOptionsMenu(Menu myMenu)

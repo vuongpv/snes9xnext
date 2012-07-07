@@ -12,6 +12,8 @@ package ca.halsafar.snesdroid;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.w3c.dom.NodeList;
+
 import ca.halsafar.snesdroid.R;
 
 import android.app.Activity;
@@ -19,8 +21,6 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -29,7 +29,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -67,123 +66,130 @@ public class InputConfigActivity extends Activity implements GestureDetector.OnG
      @Override
      public void onCreate(Bundle icicle)
      {
-          super.onCreate(icicle);
-          
-          Context context = getApplicationContext();
+          super.onCreate(icicle);          
+     }
+     
+     
+     @Override
+     public void onStart()
+     {    	 
+         NodeList buttonNodes = ConfigXML.getNodeChildren(ConfigXML.PREF_TOUCH_BUTTONS);
+         NodeList analogNodes = ConfigXML.getNodeChildren(ConfigXML.PREF_TOUCH_ANALOGS);
+         
+         // number of buttons created
+         _buttonCount = buttonNodes.getLength();
+         _analogCount = analogNodes.getLength();
+         
+         Log.d(LOG_TAG, "onStart() Parsing NumButtons: " + _buttonCount + ", NumAnalogs: " + _analogCount);
+         
+         // init  
+         _rects = new RectF[_buttonCount];
+         _bitmaps = new Bitmap[_buttonCount];
+         _analogRects = new RectF[_analogCount];
+         _analogBitmaps = new Bitmap[_analogCount];          
+                   
+   	  	_screenWidth = SettingsFacade.getRealScreenWidth(this);
+   	  	_screenHeight = SettingsFacade.getRealScreenHeight(this);
+                            
+         // create the game window rect
+         float ratio = 4.0f / 3.0f;
+         
+         boolean maintainAspect = Integer.valueOf(ConfigXML.getNodeAttribute(ConfigXML.PREF_MAINTAIN_ASPECT, "value")) != 0;
+         if (!maintainAspect)
+         {
+              ratio = _screenWidth / _screenHeight;
+         }
+                   
+         float rectHeight = _screenHeight;
+         float rectWidth = rectHeight * ratio;
+         float rectX = (_screenWidth / 2.0f) - (rectWidth / 2.0f);
+         float rectY = 0;
+                   
+         _gameRect = new RectF(rectX, rectY, rectX + rectWidth, rectY + rectHeight);
+         
+         // load the resources
+         AssetManager mngr = getAssets();
+                                   
+         // analogs
+         for (int i = 0; i < _analogCount; i++)
+         {        	  
+              float dPadX = Float.valueOf(analogNodes.item(i).getAttributes().getNamedItem("x").getNodeValue());
+              float dPadY = Float.valueOf(analogNodes.item(i).getAttributes().getNamedItem("y").getNodeValue());
+              float dPadWidth = Float.valueOf(analogNodes.item(i).getAttributes().getNamedItem("w").getNodeValue());
+              float dPadHeight = Float.valueOf(analogNodes.item(i).getAttributes().getNamedItem("h").getNodeValue());
+              String textureFile = analogNodes.item(i).getAttributes().getNamedItem("texture").getNodeValue();
 
-          // number of buttons created
-          _buttonCount = InputPreferences.getNumButtons(context);
-          _analogCount = InputPreferences.getNumAnalogs(context);
-          
-          Log.d(LOG_TAG, "onCreate() Parsing NumButtons: " + _buttonCount + ", NumAnalogs: " + _analogCount);
-          
-          // handle to prefs
-          SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-          
-          // init  
-          _analogRects = 
-          _rects = new RectF[_buttonCount];
-          _bitmaps = new Bitmap[_buttonCount];
-          _analogRects = new RectF[_analogCount];
-          _analogBitmaps = new Bitmap[_analogCount];          
-                    
-    	  _screenWidth = PreferenceFacade.getRealScreenWidth(this, context);
-    	  _screenHeight = PreferenceFacade.getRealScreenHeight(this, context);
-                             
-          // create the game window rect
-          float ratio = 4.0f / 3.0f;
-          if (!prefs.getBoolean(PreferenceFacade.PREF_MAINTAIN_ASPECT_RATIO, true))
-          {
-               ratio = _screenWidth / _screenHeight;
-          }
-                    
-          float rectHeight = _screenHeight;
-          float rectWidth = rectHeight * ratio;
-          float rectX = (_screenWidth / 2.0f) - (rectWidth / 2.0f);
-          float rectY = 0;
-                    
-          _gameRect = new RectF(rectX, rectY, rectX + rectWidth, rectY + rectHeight);
-          
-          // load the resources
-          AssetManager mngr = getAssets();
-                                    
-          // analogs
-          for (int i = 0; i < _analogCount; i++)
-          {
-               float dPadX = InputPreferences.getAnalogX(context, i);
-               float dPadY = InputPreferences.getAnalogY(context, i);
-               float dPadWidth = InputPreferences.getAnalogWidth(context, i);
-               float dPadHeight = InputPreferences.getAnalogHeight(context, i);
-               String textureFile = InputPreferences.getAnalogTexture(context, i);
+              try
+              {                   
+                   if (textureFile != null)
+                   {
+                        InputStream is = mngr.open(textureFile);
+                        _analogBitmaps[i] = BitmapFactory.decodeStream(is);                    
+                        is.close();
+                   }
+              }
+              catch (IOException e)
+              {
+                   e.printStackTrace();
+              }                 
+              _analogRects[i] = new RectF(dPadX, dPadY, dPadX + dPadWidth, dPadY + dPadHeight);
+         }
+         
+         // buttons
+         for (int i = 0; i < _buttonCount; i++)
+         {
+              float x = Float.valueOf(buttonNodes.item(i).getAttributes().getNamedItem("x").getNodeValue());
+              float y = Float.valueOf(buttonNodes.item(i).getAttributes().getNamedItem("y").getNodeValue());
+              float w = Float.valueOf(buttonNodes.item(i).getAttributes().getNamedItem("w").getNodeValue());
+              float h = Float.valueOf(buttonNodes.item(i).getAttributes().getNamedItem("h").getNodeValue());
+              //int code = InputPreferences.getButtonCode(context, i);
+              //int map = Integer.valueOf(buttonNodes.item(i).getAttributes().getNamedItem("id").getNodeValue());
+              String textureFile = buttonNodes.item(i).getAttributes().getNamedItem("texture").getNodeValue();
 
-               try
-               {                   
-                    if (textureFile != null)
-                    {
-                         InputStream is = mngr.open(textureFile);
-                         _analogBitmaps[i] = BitmapFactory.decodeStream(is);                    
-                         is.close();
-                    }
-               }
-               catch (IOException e)
-               {
-                    e.printStackTrace();
-               }                 
-               _analogRects[i] = new RectF(dPadX, dPadY, dPadX + dPadWidth, dPadY + dPadHeight);
-          }
-          
-          // buttons
-          for (int i = 0; i < _buttonCount; i++)
-          {
-               float x = InputPreferences.getButtonX(context, i);
-               float y = InputPreferences.getButtonY(context, i);
-               float w = InputPreferences.getButtonWidth(context, i);
-               float h = InputPreferences.getButtonHeight(context, i);
-               //int code = InputPreferences.getButtonCode(context, i);
-               int map = InputPreferences.getButtonMap(context, i);
-               String textureFile = InputPreferences.getButtonTexture(context, i);
-
-               try
-               {        
-                    if (textureFile != null)
-                    {                    
-                         InputStream is = mngr.open(textureFile);
-                         _bitmaps[map] = BitmapFactory.decodeStream(is);                    
-                         is.close();
-                    }
-               }
-               catch (IOException e)
-               {
-                    e.printStackTrace();
-               }  
-               _rects[map] = new RectF(x, y, x + w, y + h);
-          }          
-                    
-          // paint
-          _paint = new Paint();
-          _paint.setColor(Color.GREEN);
-          _paint.setStyle(Paint.Style.STROKE);
-          _paint.setStrokeWidth(3);          
-          
-          _paintGameRect = new Paint();
-          _paintGameRect.setColor(Color.DKGRAY);
-          _paintGameRect.setStyle(Paint.Style.FILL);            
-          
-          // set renderer
-          View _view = new InputSetupView(this);
-          setContentView(_view);  
-          
-          _gestures = new GestureDetector(this);
-          
-          Builder dialog = new AlertDialog.Builder(this)
-                              .setTitle(getString(R.string.app_name) + " Input Config")
-                              .setMessage("- Drag controls around to move them\n"+
-                                          "- Touch and hold to enter resize mode\n" +
-                                          "- In resize mode drag edges to resize\n" +
-                                          "- Press 'Back' or select another control to exit resize mode\n" +
-                                          "- Saves when you leave this screen")          
-                              .setNeutralButton("Ok", null);         
-          dialog.show();
+              try
+              {        
+                   if (textureFile != null)
+                   {                    
+                        InputStream is = mngr.open(textureFile);
+                        _bitmaps[i] = BitmapFactory.decodeStream(is);                    
+                        is.close();
+                   }
+              }
+              catch (IOException e)
+              {
+                   e.printStackTrace();
+              }  
+              _rects[i] = new RectF(x, y, x + w, y + h);
+         }          
+                   
+         // paint
+         _paint = new Paint();
+         _paint.setColor(Color.GREEN);
+         _paint.setStyle(Paint.Style.STROKE);
+         _paint.setStrokeWidth(3);          
+         
+         _paintGameRect = new Paint();
+         _paintGameRect.setColor(Color.DKGRAY);
+         _paintGameRect.setStyle(Paint.Style.FILL);            
+         
+         // set renderer
+         View _view = new InputSetupView(this);
+         setContentView(_view);  
+         
+         _gestures = new GestureDetector(this);
+         
+         Builder dialog = new AlertDialog.Builder(this)
+                             .setTitle(getString(R.string.app_name) + " Input Config")
+                             .setMessage("- Drag controls around to move them\n"+
+                                         "- Touch and hold to enter resize mode\n" +
+                                         "- In resize mode drag edges to resize\n" +
+                                         "- Press 'Back' or select another control to exit resize mode\n" +
+                                         "- Saves when you leave this screen")          
+                             .setNeutralButton("Ok", null);         
+         dialog.show();
+         
+         
+    	 super.onStart();
      }
      
      
@@ -273,28 +279,32 @@ public class InputConfigActivity extends Activity implements GestureDetector.OnG
      
      private void saveInput()
      {
-          Context context = getApplicationContext();
+         NodeList buttonNodes = ConfigXML.getNodeChildren(ConfigXML.PREF_TOUCH_BUTTONS);
+         NodeList analogNodes = ConfigXML.getNodeChildren(ConfigXML.PREF_TOUCH_ANALOGS);
+         
           for (int i = 0; i < _buttonCount; i++)
           {
-               InputPreferences.setButton(context, 
-                                        _rects[i].left, _rects[i].top, 
-                                        _rects[i].right - _rects[i].left, _rects[i].bottom - _rects[i].top, 
-                                        i);
+               buttonNodes.item(i).getAttributes().getNamedItem("x").setNodeValue(""+_rects[i].left);
+               buttonNodes.item(i).getAttributes().getNamedItem("y").setNodeValue(""+_rects[i].top);
+               buttonNodes.item(i).getAttributes().getNamedItem("w").setNodeValue(""+(_rects[i].right - _rects[i].left));
+               buttonNodes.item(i).getAttributes().getNamedItem("h").setNodeValue(""+(_rects[i].bottom - _rects[i].top));
           }         
 
           for (int i = 0; i < _analogCount; i++)
           {
-               InputPreferences.setAnalog(context, 
-                         _analogRects[i].left, _analogRects[i].top, 
-                         _analogRects[i].right - _analogRects[i].left, _analogRects[i].bottom - _analogRects[i].top, 
-                         i);
+        	  analogNodes.item(i).getAttributes().getNamedItem("x").setNodeValue(""+_analogRects[i].left);
+        	  analogNodes.item(i).getAttributes().getNamedItem("y").setNodeValue(""+_analogRects[i].top);
+        	  analogNodes.item(i).getAttributes().getNamedItem("w").setNodeValue(""+(_analogRects[i].right - _analogRects[i].left));
+        	  analogNodes.item(i).getAttributes().getNamedItem("h").setNodeValue(""+(_analogRects[i].bottom - _analogRects[i].top));
           }
           
           // turn off auto default!
-          SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+          /*SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
           Editor edit = prefs.edit();                             
           edit.putBoolean(PreferenceFacade.PREF_USE_DEFAULT_INPUT, false);
-          edit.commit();          
+          edit.commit(); */   
+
+          ConfigXML.writeConfigXML();
      }
      
 

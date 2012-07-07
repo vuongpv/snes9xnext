@@ -174,15 +174,16 @@
   Nintendo Co., Limited and its subsidiary companies.
  ***********************************************************************************/
 
-
 #ifndef _PPU_H_
 #define _PPU_H_
 
+#include "memmap.h"
+
 #define FIRST_VISIBLE_LINE	1
 
-#define TILE_2BIT			0
-#define TILE_4BIT			1
-#define TILE_8BIT			2
+#define TILE_2BIT		0
+#define TILE_4BIT		1
+#define TILE_8BIT		2
 #define TILE_2BIT_EVEN		3
 #define TILE_2BIT_ODD		4
 #define TILE_4BIT_EVEN		5
@@ -192,15 +193,15 @@
 #define MAX_4BIT_TILES		2048
 #define MAX_8BIT_TILES		1024
 
-#define CLIP_OR				0
-#define CLIP_AND			1
-#define CLIP_XOR			2
-#define CLIP_XNOR			3
+#define CLIP_OR			0
+#define CLIP_AND		1
+#define CLIP_XOR		2
+#define CLIP_XNOR		3
 
-#define PPU_IRQ_SOURCE		(1 << 1)
-#define GSU_IRQ_SOURCE		(1 << 2)
-#define SA1_IRQ_SOURCE		(1 << 7)
-#define SA1_DMA_IRQ_SOURCE	(1 << 5)
+#define PPU_IRQ_SOURCE		2
+#define GSU_IRQ_SOURCE		4
+#define SA1_DMA_IRQ_SOURCE	32
+#define SA1_IRQ_SOURCE		128
 
 struct ClipData
 {
@@ -213,7 +214,6 @@ struct ClipData
 struct InternalPPU
 {
 	struct ClipData Clip[2][6];
-	bool8	ColorsChanged;
 	bool8	OBJChanged;
 	bool8	DirectColourMapsNeedRebuild;
 	uint8	*TileCache[7];
@@ -228,23 +228,17 @@ struct InternalPPU
 	bool8	PseudoHires;
 	bool8	DoubleWidthPixels;
 	bool8	DoubleHeightPixels;
-	int		CurrentLine;
-	int		PreviousLine;
+	int	CurrentLine;
+	int	PreviousLine;
 	uint8	*XB;
 	uint32	Red[256];
 	uint32	Green[256];
 	uint32	Blue[256];
 	uint16	ScreenColors[256];
 	uint8	MaxBrightness;
-	bool8	RenderThisFrame;
-	int		RenderedScreenWidth;
-	int		RenderedScreenHeight;
-	uint32	FrameCount;
-	uint32	RenderedFramesCount;
-	uint32	DisplayedRenderedFrameCount;
-	uint32	TotalEmulatedFrames;
-	uint32	SkippedFrames;
-	uint32	FrameSkip;
+	int	RenderedScreenWidth;
+	int	RenderedScreenHeight;
+	bool8 RenderThisFrame;
 };
 
 struct SOBJ
@@ -285,6 +279,7 @@ struct SPPU
 
 	uint8	BGMode;
 	uint8	BG3Priority;
+	bool8	RenderSub;
 
 	bool8	CGFLIP;
 	uint8	CGFLIPRead;
@@ -342,6 +337,8 @@ struct SPPU
 	uint8	Mosaic;
 	uint8	MosaicStart;
 	bool8	BGMosaic[4];
+	bool8	DisableMosaicHack;
+	bool8	SFXSpeedupHack;
 
 	uint8	Window1Left;
 	uint8	Window1Right;
@@ -372,381 +369,163 @@ struct SPPU
 
 	uint8	OpenBus1;
 	uint8	OpenBus2;
+
+	bool8	FullClipping;
 };
 
-extern uint16				SignExtend[2];
-extern struct SPPU			PPU;
+extern struct SPPU		PPU;
 extern struct InternalPPU	IPPU;
 
 void S9xResetPPU (void);
 void S9xSoftResetPPU (void);
-void S9xSetPPU (uint8, uint16);
-uint8 S9xGetPPU (uint16);
-void S9xSetCPU (uint8, uint16);
-uint8 S9xGetCPU (uint16);
-void S9xUpdateHVTimerPosition (void);
-void S9xCheckMissingHTimerPosition (int32);
-void S9xCheckMissingHTimerRange (int32, int32);
-void S9xCheckMissingHTimerHalt (int32, int32);
+void S9xSetPPU (uint8 Byte, uint16 Address);
+uint8 S9xGetPPU (uint16 Address);
+void S9xSetCPU (uint8 Byte, uint16 Address);
+uint8 S9xGetCPU (uint16 Address);
+uint8 S9xGetCPU_Alt(uint16 Address);
 void S9xFixColourBrightness (void);
 void S9xDoAutoJoypad (void);
 
-#include "gfx.h"
-#include "memmap.h"
-
-typedef struct
-{
-	uint8	_5C77;
-	uint8	_5C78;
-	uint8	_5A22;
-}	SnesModel;
-
-extern SnesModel	*Model;
-extern SnesModel	M1SNES;
-extern SnesModel	M2SNES;
 
 #define MAX_5C77_VERSION	0x01
 #define MAX_5C78_VERSION	0x03
 #define MAX_5A22_VERSION	0x02
 
-static inline void FLUSH_REDRAW (void)
-{
-	if (IPPU.PreviousLine != IPPU.CurrentLine)
+#define FLUSH_REDRAW() \
+	if (IPPU.PreviousLine != IPPU.CurrentLine) \
 		S9xUpdateScreen();
-}
 
-static inline void REGISTER_2104 (uint8 Byte)
+struct SGFX
 {
-	if (PPU.OAMAddr & 0x100)
+	uint16	*Screen;
+	uint16	*SubScreen;
+	uint8	*ZBuffer;
+	uint8	*SubZBuffer;
+	uint32	Pitch;
+	uint32	ScreenSize;
+	uint16	*S;
+	uint8	*DB;
+	uint16	*X2;
+	uint16	*ZERO;
+	uint32	RealPPL;		/* true PPL of Screen buffer */
+	uint32	PPL;			/* number of pixels on each of Screen buffer */
+	uint32	LinesPerTile;		/* number of lines in 1 tile (4 or 8 due to interlace) */
+	uint16	*ScreenColors;		/* screen colors for rendering main */
+	uint16	*RealScreenColors;	/* screen colors, ignoring color window clipping */
+	uint8	Z1;			/* depth for comparison */
+	uint8	Z2;			/* depth to save */
+	uint32	FixedColour;
+	uint8	DoInterlace;
+	uint8	InterlaceFrame;
+	uint32	StartY;
+	uint32	EndY;
+	bool8	ClipColors;
+	uint8	OBJWidths[128];
+	uint8	OBJVisibleTiles[128];
+
+	struct ClipData	*Clip;
+
+	struct
 	{
-		int addr = ((PPU.OAMAddr & 0x10f) << 1) + (PPU.OAMFlip & 1);
-		if (Byte != PPU.OAMData[addr])
+		uint8	RTOFlags;
+		int16	Tiles;
+
+		struct
 		{
-			FLUSH_REDRAW();
-			PPU.OAMData[addr] = Byte;
-			IPPU.OBJChanged = TRUE;
+			int8	Sprite;
+			uint8	Line;
+		}	OBJ[32];
+	}	OBJLines[SNES_HEIGHT_EXTENDED];
 
-			// X position high bit, and sprite size (x4)
-			struct SOBJ *pObj = &PPU.OBJ[(addr & 0x1f) * 4];
-			pObj->HPos = (pObj->HPos & 0xFF) | SignExtend[(Byte >> 0) & 1];
-			pObj++->Size = Byte & 2;
-			pObj->HPos = (pObj->HPos & 0xFF) | SignExtend[(Byte >> 2) & 1];
-			pObj++->Size = Byte & 8;
-			pObj->HPos = (pObj->HPos & 0xFF) | SignExtend[(Byte >> 4) & 1];
-			pObj++->Size = Byte & 32;
-			pObj->HPos = (pObj->HPos & 0xFF) | SignExtend[(Byte >> 6) & 1];
-			pObj->Size = Byte & 128;
-		}
+	void	(*DrawBackdropMath) (uint32, uint32, uint32);
+	void	(*DrawBackdropNomath) (uint32, uint32, uint32);
+	void	(*DrawTileMath) (uint32, uint32, uint32, uint32);
+	void	(*DrawTileNomath) (uint32, uint32, uint32, uint32);
+	void	(*DrawClippedTileMath) (uint32, uint32, uint32, uint32, uint32, uint32);
+	void	(*DrawClippedTileNomath) (uint32, uint32, uint32, uint32, uint32, uint32);
+	void	(*DrawMosaicPixelMath) (uint32, uint32, uint32, uint32, uint32, uint32);
+	void	(*DrawMosaicPixelNomath) (uint32, uint32, uint32, uint32, uint32, uint32);
+	void	(*DrawMode7BG1Math) (uint32, uint32, int);
+	void	(*DrawMode7BG1Nomath) (uint32, uint32, int);
+	void	(*DrawMode7BG2Math) (uint32, uint32, int);
+	void	(*DrawMode7BG2Nomath) (uint32, uint32, int);
+};
 
-		PPU.OAMFlip ^= 1;
-		if (!(PPU.OAMFlip & 1))
-		{
-			++PPU.OAMAddr;
-			PPU.OAMAddr &= 0x1ff;
-			if (PPU.OAMPriorityRotation && PPU.FirstSprite != (PPU.OAMAddr >> 1))
-			{
-				PPU.FirstSprite = (PPU.OAMAddr & 0xfe) >> 1;
-				IPPU.OBJChanged = TRUE;
-			}
-		}
-		else
-		{
-			if (PPU.OAMPriorityRotation && (PPU.OAMAddr & 1))
-				IPPU.OBJChanged = TRUE;
-		}
-	}
-	else
-	if (!(PPU.OAMFlip & 1))
+struct SBG
+{
+	uint8	(*ConvertTile) (uint8 *, uint32, uint32);
+	uint8	(*ConvertTileFlip) (uint8 *, uint32, uint32);
+
+	uint32	TileSizeH;
+	uint32	TileSizeV;
+	uint32	OffsetSizeH;
+	uint32	OffsetSizeV;
+	uint32	TileShift;
+	uint32	TileAddress;
+	uint32	NameSelect;
+	uint32	SCBase;
+
+	uint32	StartPalette;
+	uint32	PaletteShift;
+	uint32	PaletteMask;
+	uint8	EnableMath;
+	uint8	InterlaceLine;
+
+	uint8	*Buffer;
+	uint8	*BufferFlip;
+	uint8	*Buffered;
+	uint8	*BufferedFlip;
+	bool8	DirectColourMode;
+};
+
+struct SLineData
+{
+	struct
 	{
-		PPU.OAMWriteRegister &= 0xff00;
-		PPU.OAMWriteRegister |= Byte;
-		PPU.OAMFlip |= 1;
-		if (PPU.OAMPriorityRotation && (PPU.OAMAddr & 1))
-			IPPU.OBJChanged = TRUE;
-	}
-	else
-	{
-		PPU.OAMWriteRegister &= 0x00ff;
-		uint8 lowbyte = (uint8) (PPU.OAMWriteRegister);
-		uint8 highbyte = Byte;
-		PPU.OAMWriteRegister |= Byte << 8;
+		uint16	VOffset;
+		uint16	HOffset;
+	}	BG[4];
+};
 
-		int addr = (PPU.OAMAddr << 1);
-		if (lowbyte != PPU.OAMData[addr] || highbyte != PPU.OAMData[addr + 1])
-		{
-			FLUSH_REDRAW();
-			PPU.OAMData[addr] = lowbyte;
-			PPU.OAMData[addr + 1] = highbyte;
-			IPPU.OBJChanged = TRUE;
-			if (addr & 2)
-			{
-				// Tile
-				PPU.OBJ[addr = PPU.OAMAddr >> 1].Name = PPU.OAMWriteRegister & 0x1ff;
-				// priority, h and v flip.
-				PPU.OBJ[addr].Palette  = (highbyte >> 1) & 7;
-				PPU.OBJ[addr].Priority = (highbyte >> 4) & 3;
-				PPU.OBJ[addr].HFlip    = (highbyte >> 6) & 1;
-				PPU.OBJ[addr].VFlip    = (highbyte >> 7) & 1;
-			}
-			else
-			{
-				// X position (low)
-				PPU.OBJ[addr = PPU.OAMAddr >> 1].HPos &= 0xff00;
-				PPU.OBJ[addr].HPos |= lowbyte;
-				// Sprite Y position
-				PPU.OBJ[addr].VPos = highbyte;
-			}
-		}
-
-		PPU.OAMFlip &= ~1;
-		++PPU.OAMAddr;
-		if (PPU.OAMPriorityRotation && PPU.FirstSprite != (PPU.OAMAddr >> 1))
-		{
-			PPU.FirstSprite = (PPU.OAMAddr & 0xfe) >> 1;
-			IPPU.OBJChanged = TRUE;
-		}
-	}
-}
-
-// This code is correct, however due to Snes9x's inaccurate timings, some games might be broken by this chage. :(
-#ifdef DEBUGGER
-#define CHECK_INBLANK() \
-	if (!PPU.ForcedBlanking && CPU.V_Counter < PPU.ScreenHeight + FIRST_VISIBLE_LINE) \
-	{ \
-		printf("Invalid VRAM acess at (%04d, %04d) blank:%d\n", CPU.Cycles, CPU.V_Counter, PPU.ForcedBlanking); \
-		if (Settings.BlockInvalidVRAMAccess) \
-			return; \
-	}
-#else
-#define CHECK_INBLANK() \
-	if (Settings.BlockInvalidVRAMAccess && !PPU.ForcedBlanking && CPU.V_Counter < PPU.ScreenHeight + FIRST_VISIBLE_LINE) \
-		return;
-#endif
-
-static inline void REGISTER_2118 (uint8 Byte)
+struct SLineMatrixData
 {
-	CHECK_INBLANK();
+	short	MatrixA;
+	short	MatrixB;
+	short	MatrixC;
+	short	MatrixD;
+	short	CentreX;
+	short	CentreY;
+	short	M7HOFS;
+	short	M7VOFS;
+};
 
-	uint32	address;
+extern uint8		mul_brightness[16][32];
+extern struct SBG	BG;
+extern struct SGFX	GFX;
 
-	if (PPU.VMA.FullGraphicCount)
-	{
-		uint32 rem = PPU.VMA.Address & PPU.VMA.Mask1;
-		address = (((PPU.VMA.Address & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3)) << 1) & 0xffff;
-		Memory.VRAM[address] = Byte;
-	}
-	else
-		Memory.VRAM[address = (PPU.VMA.Address << 1) & 0xffff] = Byte;
+#define H_FLIP		0x4000
+#define V_FLIP		0x8000
+#define BLANK_TILE	2
 
-	IPPU.TileCached[TILE_2BIT][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_4BIT][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_8BIT][address >> 6] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
+#define COLOR_ADD1_2(C1, C2) \
+	((((((C1) & RGB_REMOVE_LOW_BITS_MASK) + \
+	((C2) & RGB_REMOVE_LOW_BITS_MASK)) >> 1) + \
+	((C1) & (C2) & RGB_LOW_BITS_MASK)) | ALPHA_BITS_MASK)
 
-	if (!PPU.VMA.High)
-	{
-	#ifdef DEBUGGER
-		if (Settings.TraceVRAM && !CPU.InDMAorHDMA)
-			printf("VRAM write byte: $%04X (%d, %d)\n", PPU.VMA.Address, Memory.FillRAM[0x2115] & 3, (Memory.FillRAM[0x2115] & 0x0c) >> 2);
-	#endif
-		PPU.VMA.Address += PPU.VMA.Increment;
-	}
-}
+#define COLOR_ADD(C1, C2) \
+	GFX.X2 [((((C1) & RGB_REMOVE_LOW_BITS_MASK) + \
+	((C2) & RGB_REMOVE_LOW_BITS_MASK)) >> 1) + \
+	((C1) & (C2) & RGB_LOW_BITS_MASK)]
 
-static inline void REGISTER_2119 (uint8 Byte)
-{
-	CHECK_INBLANK();
+#define COLOR_SUB1_2(C1, C2) \
+	GFX.ZERO[(((C1) | RGB_HI_BITS_MASKx2) - \
+	((C2) & RGB_REMOVE_LOW_BITS_MASK)) >> 1]
 
-	uint32	address;
+void S9xUpdateScreen (void);
 
-	if (PPU.VMA.FullGraphicCount)
-	{
-		uint32 rem = PPU.VMA.Address & PPU.VMA.Mask1;
-		address = ((((PPU.VMA.Address & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3)) << 1) + 1) & 0xffff;
-		Memory.VRAM[address] = Byte;
-	}
-	else
-		Memory.VRAM[address = ((PPU.VMA.Address << 1) + 1) & 0xffff] = Byte;
+/* external port interface which must be initialised for each port */
 
-	IPPU.TileCached[TILE_2BIT][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_4BIT][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_8BIT][address >> 6] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-
-	if (PPU.VMA.High)
-	{
-	#ifdef DEBUGGER
-		if (Settings.TraceVRAM && !CPU.InDMAorHDMA)
-			printf("VRAM write word: $%04X (%d, %d)\n", PPU.VMA.Address, Memory.FillRAM[0x2115] & 3, (Memory.FillRAM[0x2115] & 0x0c) >> 2);
-	#endif
-		PPU.VMA.Address += PPU.VMA.Increment;
-	}
-}
-
-static inline void REGISTER_2118_tile (uint8 Byte)
-{
-	CHECK_INBLANK();
-
-	uint32 rem = PPU.VMA.Address & PPU.VMA.Mask1;
-	uint32 address = (((PPU.VMA.Address & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3)) << 1) & 0xffff;
-
-	Memory.VRAM[address] = Byte;
-
-	IPPU.TileCached[TILE_2BIT][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_4BIT][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_8BIT][address >> 6] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-
-	if (!PPU.VMA.High)
-		PPU.VMA.Address += PPU.VMA.Increment;
-}
-
-static inline void REGISTER_2119_tile (uint8 Byte)
-{
-	CHECK_INBLANK();
-
-	uint32 rem = PPU.VMA.Address & PPU.VMA.Mask1;
-	uint32 address = ((((PPU.VMA.Address & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3)) << 1) + 1) & 0xffff;
-
-	Memory.VRAM[address] = Byte;
-
-	IPPU.TileCached[TILE_2BIT][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_4BIT][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_8BIT][address >> 6] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-
-	if (PPU.VMA.High)
-		PPU.VMA.Address += PPU.VMA.Increment;
-}
-
-static inline void REGISTER_2118_linear (uint8 Byte)
-{
-	CHECK_INBLANK();
-
-	uint32	address;
-
-	Memory.VRAM[address = (PPU.VMA.Address << 1) & 0xffff] = Byte;
-
-	IPPU.TileCached[TILE_2BIT][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_4BIT][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_8BIT][address >> 6] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-
-	if (!PPU.VMA.High)
-		PPU.VMA.Address += PPU.VMA.Increment;
-}
-
-static inline void REGISTER_2119_linear (uint8 Byte)
-{
-	CHECK_INBLANK();
-
-	uint32	address;
-
-	Memory.VRAM[address = ((PPU.VMA.Address << 1) + 1) & 0xffff] = Byte;
-
-	IPPU.TileCached[TILE_2BIT][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_4BIT][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_8BIT][address >> 6] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_EVEN][((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [address >> 4] = FALSE;
-	IPPU.TileCached[TILE_2BIT_ODD] [((address >> 4) - 1) & (MAX_2BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_EVEN][((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [address >> 5] = FALSE;
-	IPPU.TileCached[TILE_4BIT_ODD] [((address >> 5) - 1) & (MAX_4BIT_TILES - 1)] = FALSE;
-
-	if (PPU.VMA.High)
-		PPU.VMA.Address += PPU.VMA.Increment;
-}
-
-static inline void REGISTER_2122 (uint8 Byte)
-{
-	if (PPU.CGFLIP)
-	{
-		if ((Byte & 0x7f) != (PPU.CGDATA[PPU.CGADD] >> 8))
-		{
-			FLUSH_REDRAW();
-			PPU.CGDATA[PPU.CGADD] &= 0x00ff;
-			PPU.CGDATA[PPU.CGADD] |= (Byte & 0x7f) << 8;
-			IPPU.ColorsChanged = TRUE;
-			IPPU.Blue[PPU.CGADD] = IPPU.XB[(Byte >> 2) & 0x1f];
-			IPPU.Green[PPU.CGADD] = IPPU.XB[(PPU.CGDATA[PPU.CGADD] >> 5) & 0x1f];
-			IPPU.ScreenColors[PPU.CGADD] = (uint16) BUILD_PIXEL(IPPU.Red[PPU.CGADD], IPPU.Green[PPU.CGADD], IPPU.Blue[PPU.CGADD]);
-		}
-
-		PPU.CGADD++;
-	}
-	else
-	{
-		if (Byte != (uint8) (PPU.CGDATA[PPU.CGADD] & 0xff))
-		{
-			FLUSH_REDRAW();
-			PPU.CGDATA[PPU.CGADD] &= 0x7f00;
-			PPU.CGDATA[PPU.CGADD] |= Byte;
-			IPPU.ColorsChanged = TRUE;
-			IPPU.Red[PPU.CGADD] = IPPU.XB[Byte & 0x1f];
-			IPPU.Green[PPU.CGADD] = IPPU.XB[(PPU.CGDATA[PPU.CGADD] >> 5) & 0x1f];
-			IPPU.ScreenColors[PPU.CGADD] = (uint16) BUILD_PIXEL(IPPU.Red[PPU.CGADD], IPPU.Green[PPU.CGADD], IPPU.Blue[PPU.CGADD]);
-		}
-	}
-
-	PPU.CGFLIP ^= 1;
-}
-
-static inline void REGISTER_2180 (uint8 Byte)
-{
-	Memory.RAM[PPU.WRAM++] = Byte;
-	PPU.WRAM &= 0x1ffff;
-}
-
-static inline uint8 REGISTER_4212 (void)
-{
-	uint8	byte = 0;
-
-    if ((CPU.V_Counter >= PPU.ScreenHeight + FIRST_VISIBLE_LINE) && (CPU.V_Counter < PPU.ScreenHeight + FIRST_VISIBLE_LINE + 3))
-		byte = 1;
-	if ((CPU.Cycles < Timings.HBlankEnd) || (CPU.Cycles >= Timings.HBlankStart))
-		byte |= 0x40;
-    if (CPU.V_Counter >= PPU.ScreenHeight + FIRST_VISIBLE_LINE)
-		byte |= 0x80;
-
-    return (byte);
-}
+bool8 S9xGraphicsInit (void);
+void S9xGraphicsDeinit (void);
 
 #endif

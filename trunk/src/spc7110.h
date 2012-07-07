@@ -180,7 +180,13 @@
 
 #define SPC7110_DECOMP_BUFFER_SIZE	64
 
-// for snapshot only
+typedef struct
+{
+	uint8	index;
+	uint8	invert;
+} ContextState;
+
+/* for snapshot only */
 struct SSPC7110Snapshot
 {
 	uint8	r4801;
@@ -207,8 +213,8 @@ struct SSPC7110Snapshot
 
 	uint8	r481x;
 
-	bool8	r4814_latch;			// bool
-	bool8	r4815_latch;			// bool
+	bool8	r4814_latch;			/* bool */
+	bool8	r4815_latch;			/* bool */
 
 	uint8	r4820;
 	uint8	r4821;
@@ -233,32 +239,28 @@ struct SSPC7110Snapshot
 	uint8	r4833;
 	uint8	r4834;
 
-	uint32	dx_offset;				// unsigned
-	uint32	ex_offset;				// unsigned
-	uint32	fx_offset;				// unsigned
+	uint32	dx_offset;			/* unsigned */
+	uint32	ex_offset;			/* unsigned */
+	uint32	fx_offset;			/* unsigned */
 
 	uint8	r4840;
 	uint8	r4841;
 	uint8	r4842;
 
-	int32	rtc_state;				// enum RTC_State
-	int32	rtc_mode;				// enum RTC_Mode
-	uint32	rtc_index;				// unsigned
+	int32	rtc_state;			/* enum RTC_State */
+	int32	rtc_mode;			/* enum RTC_Mode */
+	uint32	rtc_index;			/* unsigned */
 
-	uint32	decomp_mode;			// unsigned
-	uint32	decomp_offset;			// unsigned
+	uint32	decomp_mode;			/* unsigned */
+	uint32	decomp_offset;			/* unsigned */
 
 	uint8	decomp_buffer[SPC7110_DECOMP_BUFFER_SIZE];
 
-	uint32	decomp_buffer_rdoffset;	// unsigned
-	uint32	decomp_buffer_wroffset;	// unsigned
-	uint32	decomp_buffer_length;	// unsigned
+	uint32	decomp_buffer_rdoffset;		/* unsigned */
+	uint32	decomp_buffer_wroffset;		/* unsigned */
+	uint32	decomp_buffer_length;		/* unsigned */
 
-	struct ContextState
-	{
-		uint8	index;
-		uint8	invert;
-	}	context[32];
+	ContextState context[32];
 };
 
 extern struct SSPC7110Snapshot	s7snap;
@@ -267,9 +269,9 @@ void S9xInitSPC7110 (void);
 void S9xResetSPC7110 (void);
 void S9xSPC7110PreSaveState (void);
 void S9xSPC7110PostLoadState (int);
-void S9xSetSPC7110 (uint8, uint16);
-uint8 S9xGetSPC7110 (uint16);
-uint8 S9xGetSPC7110Byte (uint32);
-uint8 * S9xGetBasePointerSPC7110 (uint32);
+void S9xSetSPC7110 (uint8 Byte, uint16 Address);
+uint8 S9xGetSPC7110 (uint16 address);
+uint8 S9xGetSPC7110Byte (uint32 address);
+uint8 * S9xGetBasePointerSPC7110 (uint32 address);
 
 #endif

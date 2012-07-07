@@ -1,30 +1,82 @@
-#include "Snes9xSystem.h"
-
 #include <string.h>
 #include <unistd.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "apu/apu.h"
-#include "gfx.h"
-#include "snapshot.h"
-#include "controls.h"
-#include "cheats.h"
-#include "movie.h"
-#include "logger.h"
-#include "display.h"
-#include "conffile.h"
+#include <audio/interface.h>
 
+#include "Snes9xSystem.h"
 #include "Application.h"
 
-extern Application Emulator;
+#include "Snes9xSystem.h"
 
 
-void S9xParsePortConfig (ConfigFile &conf, int pass)
+namespace Base
 {
+
+// APK and EXTERNAL PATHS
+extern char g_apkFileName[MAX_PATH_LENGTH];
+extern char g_externalStoragePath[MAX_PATH_LENGTH];
 
 }
 
+
+namespace EmulatorBase
+{
+     // Directories
+     extern char g_romsDir[MAX_PATH_LENGTH];
+     extern char g_statesDir[MAX_PATH_LENGTH];
+     extern char g_savesDir[MAX_PATH_LENGTH];
+     extern char g_shadersDir[MAX_PATH_LENGTH];
+     extern char g_cheatsDir[MAX_PATH_LENGTH];
+     extern char g_tempDir[MAX_PATH_LENGTH];
+     extern char g_configFilePath[MAX_PATH_LENGTH];
+}
+
+
+extern Application Emulator;
+
+extern const char *S9xGetDirectory (uint32_t dirtype);
+
+static const uint audioMaxFramesPerUpdate = (SandstormAudio::maxRate/49)*2;
+
+void S9xAudioCallback()
+{
+   //size_t i;
+   size_t samples = 0;
+   uint frames = 0;
+   // Just pick a big buffer. We won't use it all.
+   static int16_t audioBuff[4096];
+
+   S9xFinalizeSamples();
+   samples = S9xGetSampleCount();
+   frames = samples / 2;
+
+   /*(static SandstormAudio::BufferContext *aBuff = 0;
+   int16 *audioBuff = 0;
+   if ((aBuff = SandstormAudio::getPlayBuffer(frames)))
+   {
+        audioBuff = (int16*)aBuff->data;
+   }
+   else
+   {
+        LOGD("FAIL GETTING PLAY BUFFER");
+        return;
+   }*/
+
+   //int16 audioBuff[samples];
+   S9xMixSamples(audioBuff, samples);
+
+   //SandstormAudio::commitPlayBuffer(aBuff, frames);
+   SandstormAudio::writePcm((unsigned char*)audioBuff, frames);
+
+   //LOGD("Audio frames %d", frames);
+}
+
+
+/*void S9xParsePortConfig (ConfigFile &conf, int pass)
+{
+
+}
+*/
 
 void S9xExtraUsage (void)
 {
@@ -103,17 +155,25 @@ bool8 S9xInitUpdate (void)
 
 
 static int s_lastWidth = 0;
-bool8 S9xDeinitUpdate (int width, int height)
+void S9xDeinitUpdate (int width, int height)
 {
+     //LOGD("S9xDeinitUpdate(%d, %d)", width, height);
      if (width != s_lastWidth)
      {
+          if (width == 512 || height == 448 || height == 478)
+          {
+               GFX.Pitch = 1024;
+          }
+          else
+          {
+               GFX.Pitch = 512;
+          }
+
           s_lastWidth = width;
           Emulator.Graphics.ReshapeEmuTexture(width, height, SCREEN_RENDER_TEXTURE_WIDTH);
      }
 
 	Emulator.Graphics.DrawEMU(GFX.Screen, width, height);
-
-	return true;
 }
 
 
@@ -125,7 +185,7 @@ bool8 S9xContinueUpdate (int width, int height)
 
 void S9xMessage (int type, int number, char const *message)
 {
-	S9xSetInfoString(message);
+	LOGD("[%d-%d]: %s", type, number, message);
 }
 
 
@@ -135,18 +195,18 @@ bool8 S9xOpenSoundDevice (void)
 }
 
 
-const char * S9xGetFilename (const char *ex, enum s9x_getdirtype dirtype)
+const char * S9xGetFilename (const char *ex, uint32_t dirtype)
 {
-	static char	s[PATH_MAX + 1];
-	char		drive[_MAX_DRIVE + 1];
-	char		dir[_MAX_DIR + 1];
-	char		fname[_MAX_FNAME + 1];
-	char		ext[_MAX_EXT + 1];
+     static char    s[PATH_MAX + 1];
+     char      drive[_MAX_DRIVE + 1];
+     char      dir[PATH_MAX + 1];
+     char      fname[PATH_MAX + 1];
+     char      ext[PATH_MAX + 1];
 
-	_splitpath(Memory.ROMFilename, drive, dir, fname, ext);
-	snprintf(s, PATH_MAX + 1, "%s%s%s%s", S9xGetDirectory(dirtype), SLASH_STR, fname, ex);
+     _splitpath(Memory.ROMFilename, drive, dir, fname, ext);
+     snprintf(s, PATH_MAX + 1, "%s%s%s%s", S9xGetDirectory(dirtype), SLASH_STR, fname, ex);
 
-	return (s);
+     return (s);
 }
 
 
@@ -154,9 +214,9 @@ const char * S9xGetFilenameInc (const char *ex, enum s9x_getdirtype dirtype)
 {
 	static char	s[PATH_MAX + 1];
 	char		drive[_MAX_DRIVE + 1];
-	char		dir[_MAX_DIR + 1];
-	char		fname[_MAX_FNAME + 1];
-	char		ext[_MAX_EXT + 1];
+	char		dir[PATH_MAX + 1];
+	char		fname[PATH_MAX + 1];
+	char		ext[PATH_MAX + 1];
 
 	unsigned int	i = 0;
 	const char	*d;
@@ -183,19 +243,21 @@ const char * S9xBasename (const char *f)
 }
 
 
-const char *S9xGetDirectory (enum s9x_getdirtype dirtype)
+const char *S9xGetDirectory (uint32_t dirtype)
 {
 	static char s[PATH_MAX + 1];
 
 	switch (dirtype)
 	{
 		case SNAPSHOT_DIR:
-			return "/sdcard/SNESDroid/states/";
+			return EmulatorBase::g_statesDir;
 			break;
 		case CHEAT_DIR:
-			return "/sdcard/SNESDroid/cheats/";
+			return EmulatorBase::g_cheatsDir;
 			break;
 		case SRAM_DIR:
+		     return EmulatorBase::g_savesDir;
+		     break;
 		case ROMFILENAME_DIR:
 			strncpy(s, Memory.ROMFilename, PATH_MAX + 1);
 			s[PATH_MAX] = 0;
@@ -212,7 +274,7 @@ const char *S9xGetDirectory (enum s9x_getdirtype dirtype)
 			return s;
 			break;
 		default:
-			return "/sdcard/SNESDroid/";
+			return Base::g_externalStoragePath;
 	}
 }
 
@@ -221,12 +283,14 @@ const char *S9xChooseFilename (bool8 read_only)
 {
 	static char	filename[PATH_MAX + 1];
 	static char	drive[_MAX_DRIVE + 1];
-	static char	dir[_MAX_DIR + 1];
-	static char	def[_MAX_FNAME + 1];
-	static char	ext[_MAX_EXT + 1];
+	static char	dir[PATH_MAX + 1];
+	static char	def[PATH_MAX + 1];
+	static char	ext[PATH_MAX + 1];
 
 	_splitpath(Memory.ROMFilename, drive, dir, def, ext);
 	snprintf(filename, PATH_MAX + 1, "%s%s%s.%03d", S9xGetDirectory(SNAPSHOT_DIR), SLASH_STR, def, Emulator.getCurrentSaveSlot());
+
+	LOGD("S9xChooseFilename result: %s", filename);
 
 	return filename;
 }
@@ -238,12 +302,6 @@ const char *S9xChooseMovieFilename (bool8 read_only)
 }
 
 
-void S9xAutoSaveSRAM (void)
-{
-	Memory.SaveSRAM(S9xGetFilename(".srm", SRAM_DIR));
-}
-
-
 void S9xToggleSoundChannel (int c)
 {
 }
@@ -251,24 +309,6 @@ void S9xToggleSoundChannel (int c)
 
 void S9xSetPalette (void)
 {
-}
-
-
-void S9xSyncSpeed (void)
-{
-     /*while (!S9xSyncSound())
-     {
-          usleep(8);
-     }*/
-
-     static int fskipc = 0;
-     fskipc=(fskipc+1)%(Emulator.getFrameSkip()+1);
-
-     IPPU.RenderThisFrame = true;
-     if (fskipc)
-     {
-          IPPU.RenderThisFrame = false;
-     }
 }
 
 

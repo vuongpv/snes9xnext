@@ -26,7 +26,6 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
-import ca.halsafar.audio.AudioPlayer;
 import ca.halsafar.snesdroid.Emulator;
 
 
@@ -466,7 +465,7 @@ class EmulatorView extends GLSurfaceView
      @Override
      public boolean onKeyUp(int keyCode, KeyEvent event)
      {
-    	 Log.d(LOG_TAG, "onKeyUp(" + keyCode + ", " + event + ")");
+    	 //Log.d(LOG_TAG, "onKeyUp(" + keyCode + ", " + event + ")");
     	 
           if (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
                     keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
@@ -483,7 +482,7 @@ class EmulatorView extends GLSurfaceView
      @Override
      public boolean onKeyDown(int keyCode, KeyEvent event)
      {
-    	 Log.d(LOG_TAG, "onKeyDown(" + keyCode + ", " + event + ")");
+    	 //Log.d(LOG_TAG, "onKeyDown(" + keyCode + ", " + event + ")");
     	 
           if (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
                     keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
@@ -503,13 +502,27 @@ class EmulatorView extends GLSurfaceView
           // Log.d(LOG_TAG, "onWindowFocusChanged(" + hasFocus + ")");
 
           _hasFocus = hasFocus;
+
+      	 this.queueEvent(new Runnable()
+         {
+
+              public void run()
+              {
+                  if (_hasFocus)
+                  {
+                	  Emulator.onResume();
+                  }
+                  else
+                  {
+                	  Emulator.onPause();
+                  }
+              }
+         });          
+
      }
 
      private class Renderer implements GLSurfaceView.Renderer
      {
-          short[] tempBuf = new short[PreferenceFacade.AUDIO_MIX_SAMPLES_MAX];
-
-
           public void onDrawFrame(GL10 gl)
           {
                // android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
@@ -525,37 +538,13 @@ class EmulatorView extends GLSurfaceView
               }
 
               Emulator.step();
-              Emulator.draw(); 
-              
-              int readAmount = Emulator.mixAudioBuffer(tempBuf);
-              if (readAmount <= 0)
-              {
-            	  return;
-              }          
-              
-              //Log.d(LOG_TAG, "AudioMix Samples: " + readAmount);
-              AudioPlayer.play(tempBuf, readAmount);                                
+              Emulator.draw();                                    
           }
-
 
           public void onSurfaceChanged(GL10 gl, int width, int height)
           {
                Log.d(LOG_TAG, "onSurfaceChanged(" + width + ", " + height + ")");
-               
-               Emulator.setViewport(width, height);
-          }
-
-
-          public void onSurfaceCreated(GL10 gl, EGLConfig config)
-          {
-               Log.d(LOG_TAG, "onSurfaceCreated()");              
-                
-               // init graphics
-               Emulator.initGraphics();
-               
-               // load prefs
-               PreferenceFacade.loadGraphicsPrefs(EmulatorView.this.getContext());
-               
+                              
                // calculate height of anything on the phone other than the game window
                // mostly for tablets!
                Rect rect = new Rect();
@@ -566,7 +555,23 @@ class EmulatorView extends GLSurfaceView
                          Window.ID_ANDROID_CONTENT)
                          .getTop();
                int TitleBarHeight = contentViewTop - MenuBarHeight;
-               TotalOuterHeight = MenuBarHeight + TitleBarHeight;
+               TotalOuterHeight = MenuBarHeight + TitleBarHeight;               
+               
+               Log.d(LOG_TAG, "TotalOuterHeight: " + TotalOuterHeight);
+               
+               int screenFlag = SettingsFacade.getScreenSizeFlag(_activity);  
+               
+               // init graphics
+        	   Emulator.initGraphics(width, height, screenFlag);
+               //Emulator.setViewport(width, height);
+          }
+
+
+          public void onSurfaceCreated(GL10 gl, EGLConfig config)
+          {
+               Log.d(LOG_TAG, "onSurfaceCreated()");              
+
+               // DO NOTHING HERE
           }
      }
 }

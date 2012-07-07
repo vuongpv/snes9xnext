@@ -24,7 +24,7 @@ import android.util.Log;
  * @author halsafar
  *
  */
-public class AudioPlayer
+/*public class AudioPlayer
 {
      private static String     LOG_TAG = "AudioPlayer";
      
@@ -177,4 +177,4 @@ public class AudioPlayer
      {
           return _minSamples;
      }
-}
+}*/

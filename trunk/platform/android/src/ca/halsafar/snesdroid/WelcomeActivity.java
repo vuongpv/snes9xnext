@@ -1,5 +1,5 @@
 /**
- * GENPlusDroid
+ * EMULATOR FRAMEWORK
  * Copyright 2011 Stephen Damm (Halsafar)
  * All rights reserved.
  * shinhalsafar@gmail.com

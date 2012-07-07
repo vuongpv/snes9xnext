@@ -11,14 +11,13 @@ package ca.halsafar.snesdroid;
 
 import java.io.File;
 
-import ca.halsafar.audio.AudioPlayer;
+
 import ca.halsafar.filechooser.FileChooser;
 import ca.halsafar.snesdroid.Emulator;
-import ca.halsafar.snesdroid.PreferenceFacade;
+import ca.halsafar.snesdroid.SettingsFacade;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences.Editor;
@@ -53,12 +52,21 @@ public class MainActivity extends Activity
      {
           Log.d(LOG_TAG, "onCreate()");
           
-          super.onCreate(savedInstanceState);         
+          super.onCreate(savedInstanceState);              
+     }
+     
+     
+     @Override
+     public void onStart()
+     {
+          Log.d(LOG_TAG, "onStart()");
+          
+          super.onStart();         
 
           System.gc();
-          
-          init();          
-     }
+                    
+          init();             
+     }     
               
      
      private boolean verifyExternalStorage()
@@ -120,96 +128,126 @@ public class MainActivity extends Activity
      private void init()
      {
           if (verifyExternalStorage() && !_init)
-          {                                                                                     
-               // always try and make application dirs
-               String extStorageDirectory = Environment.getExternalStorageDirectory().toString();
+          {    
+        	  // generate APK path for the native side
+              ApplicationInfo appInfo = null;
+              PackageManager packMgmr = this.getPackageManager();
+              try
+              {
+                   appInfo = packMgmr.getApplicationInfo(getString(R.string.package_name), 0);
+              } 
+              catch (NameNotFoundException e)
+              {
+                   e.printStackTrace();
+                   throw new RuntimeException("Unable to locate assets, aborting...");
+              }
+              String _apkPath = appInfo.sourceDir;                  	  
+        	  
+        	  // always try and make application dirs
+        	  String extStorageDirectory = Environment.getExternalStorageDirectory().toString();
+        	  
+        	  // create storage dir for app
+              File myNewFolder = new File(extStorageDirectory + SettingsFacade.DEFAULT_DIR);
+              if (!myNewFolder.exists())
+              {
+                   myNewFolder.mkdir();
+              }            	  
+        	  
+        	  // check if config.xml exists
+        	  boolean configExists = (new File(extStorageDirectory + SettingsFacade.DEFAULT_DIR + "/config.xml")).exists();
+        	  
+        	  // test to verify if we get correct values at this point
+               // it appears we do
+               int width = SettingsFacade.getRealScreenWidth(this);
+               int height = SettingsFacade.getRealScreenHeight(this);
+               Log.d(LOG_TAG, "Width: " + width);
+               Log.d(LOG_TAG, "Height: " + height);                      
+                                         
+               // do first run welcome screen
+               SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());                             
+               boolean firstRun = preferences.getBoolean(SettingsFacade.PREF_FIRST_RUN, true);
                
-               File myNewFolder = new File(extStorageDirectory + PreferenceFacade.DEFAULT_DIR);
-               if (!myNewFolder.exists())
+               if (!firstRun && !configExists)
                {
-                    myNewFolder.mkdir();
-               }                             
+            	   Emulator.init(_apkPath, extStorageDirectory + SettingsFacade.DEFAULT_DIR);
+            	   Emulator.resetConfig();
+               }
+               else if (firstRun)
+               {     
+            	   //init and reset input
+                   Emulator.init(_apkPath, extStorageDirectory + SettingsFacade.DEFAULT_DIR);     
+                   Emulator.resetConfig();
+            	                       
+                   // remove first run flag
+                   Editor edit = preferences.edit();
+                   edit.putBoolean(SettingsFacade.PREF_FIRST_RUN, false);
+                   edit.commit();
+                   
+                   // start welcome activity
+                   Intent intent = new Intent(MainActivity.this, WelcomeActivity.class);
+                   startActivity(intent);               
+                   
+                   // might as well exit, user probably bringing us down anyway
+                   finish();
+                   
+                   return;
+               }
+               else if (!firstRun)
+               {
+                   Emulator.init(_apkPath, extStorageDirectory + SettingsFacade.DEFAULT_DIR);                                                                 	    
+               }
+               else
+               {
+            	   // init the emulator
+            	   Emulator.init(_apkPath, extStorageDirectory + SettingsFacade.DEFAULT_DIR);
+               }
                
-               myNewFolder = new File(extStorageDirectory + PreferenceFacade.DEFAULT_DIR_ROMS);
+               Log.d(LOG_TAG, "Config FILE: " + Emulator.getConfigFileName());
+               
+               boolean firstRunVersion = preferences.getBoolean(SettingsFacade.PREF_FIRST_RUN_UPDATE, true);
+               if (firstRunVersion)
+               {
+                   Builder dialog = new AlertDialog.Builder(this)
+                   .setTitle(getString(R.string.app_name) + " UPDATE INFO")
+                   .setMessage(getString(R.string.whatsNew));
+                   dialog.show();     
+                   
+                   Editor edit = preferences.edit();
+                   edit.putBoolean(SettingsFacade.PREF_FIRST_RUN_UPDATE, false);
+                   edit.commit();
+               }
+               
+               // create emu storage paths                                       
+               myNewFolder = new File((ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_ROMS, "value")));
                if (!myNewFolder.exists())
                {
                     myNewFolder.mkdir();
                }
                
-               myNewFolder = new File(extStorageDirectory + PreferenceFacade.DEFAULT_DIR_STATES);
+               myNewFolder = new File((ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_STATES, "value")));
                if (!myNewFolder.exists())
                {
                     myNewFolder.mkdir();
                }
                
-               myNewFolder = new File(extStorageDirectory + PreferenceFacade.DEFAULT_DIR_SRAM);
+               myNewFolder = new File((ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_SAVES, "value")));
                if (!myNewFolder.exists())
                {
                     myNewFolder.mkdir();
                }
                
-               myNewFolder = new File(extStorageDirectory + PreferenceFacade.DEFAULT_DIR_SHADERS);
+               myNewFolder = new File((ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_SHADERS, "value")));
                if (!myNewFolder.exists())
                {
                     myNewFolder.mkdir();
                }         
                
-               myNewFolder = new File(extStorageDirectory + PreferenceFacade.DEFAULT_DIR_TEMPFILES);
+               myNewFolder = new File((ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_TEMP, "value")));
                if (!myNewFolder.exists())
                {
                     myNewFolder.mkdir();
-               }                 
-               
-               // do first run welcome screen
-               SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());                             
-               boolean firstRun = preferences.getBoolean(PreferenceFacade.PREF_FIRST_RUN, true);
-               if (firstRun)
-               {                          
-                    // default input                                        
-                    EmulatorButtons.resetInput(this, getApplicationContext());                    
-                    
-                    // remove first run flag
-                    Editor edit = preferences.edit();
-                    edit.putBoolean(PreferenceFacade.PREF_FIRST_RUN, false);
-                    edit.commit();
-                    
-                    // start welcome activity
-                    Intent intent = new Intent(MainActivity.this, WelcomeActivity.class);
-                    startActivity(intent);               
-                    
-                    // might as well exit, user probably bringing us down anyway
-                    finish();
-                    
-                    return;
-               }
-               
-               // generate APK path for the native side
-               ApplicationInfo appInfo = null;
-               PackageManager packMgmr = this.getPackageManager();
-               try
-               {
-                    appInfo = packMgmr.getApplicationInfo(getString(R.string.package_name), 0);
-               } 
-               catch (NameNotFoundException e)
-               {
-                    e.printStackTrace();
-                    throw new RuntimeException("Unable to locate assets, aborting...");
-               }
-               String _apkPath = appInfo.sourceDir;                                                       
+               }     
 
-               // init the emulator
-               Emulator.init(_apkPath);
-               
-               // set the paths
-               Emulator.setPaths(extStorageDirectory + PreferenceFacade.DEFAULT_DIR,
-            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_ROMS, 
-            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_STATES,
-            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_SRAM, 
-            		   				extStorageDirectory + PreferenceFacade.DEFAULT_DIR_CHEATS);
-
-               // load up prefs now, never again unless they change
-               //PreferenceFacade.loadPrefs(this, getApplicationContext());                   
-               
                // load gui
                Log.d(LOG_TAG, "Done init()");
                setContentView(R.layout.main);
@@ -311,16 +349,15 @@ public class MainActivity extends Activity
           Log.d(LOG_TAG, "onDestroy()");
 
           super.onDestroy();      
-                    
-          AudioPlayer.destroy();          
+                           
           Emulator.destroy();           
           
           // check for auto save
-          PreferenceFacade.DoAutoSave(getApplicationContext());
+          SettingsFacade.DoAutoSave();
           
           // clean temp dir or all files, just files for now
           // @TODO - full clean
-          File tempFolder = new File(Environment.getExternalStorageDirectory().toString() + PreferenceFacade.DEFAULT_DIR_TEMPFILES + "/");
+          File tempFolder = new File((ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_TEMP, "value")));
           if (tempFolder.exists())
           {
                String[] children = tempFolder.list();
@@ -350,13 +387,15 @@ public class MainActivity extends Activity
      
      protected void spawnFileChooser()
      {
+    	 String romDir = ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_ROMS, "value");
+    	 String tempDir = ConfigXML.getNodeAttribute(ConfigXML.PREF_DIR_TEMP, "value");
+    	 
           // spawn the file chooser
-          Context context = getApplicationContext();
           Intent myIntent = new Intent(MainActivity.this, FileChooser.class);
-          myIntent.putExtra(FileChooser.EXTRA_START_DIR, PreferenceFacade.getRomDir(context));
-          myIntent.putExtra(FileChooser.EXTRA_EXTENSIONS, PreferenceFacade.DEFAULT_ROM_EXTENSIONS);
-          myIntent.putExtra(FileChooser.EXTRA_TEMP_DIR, PreferenceFacade.getTempDir(context));
-          final int result=PreferenceFacade.MENU_ROM_SELECT;
+          myIntent.putExtra(FileChooser.EXTRA_START_DIR, romDir);
+          myIntent.putExtra(FileChooser.EXTRA_EXTENSIONS, SettingsFacade.DEFAULT_ROM_EXTENSIONS);
+          myIntent.putExtra(FileChooser.EXTRA_TEMP_DIR, tempDir);
+          final int result=SettingsFacade.MENU_ROM_SELECT;
           startActivityForResult(myIntent, result);             
      }
      
@@ -365,7 +404,7 @@ public class MainActivity extends Activity
      {
           // spawn the file chooser
           Intent myIntent = new Intent(MainActivity.this, SettingsActivity.class);
-          final int result=PreferenceFacade.MENU_SETTINGS;
+          final int result=SettingsFacade.MENU_SETTINGS;
           startActivityForResult(myIntent, result);             
      }     
      
@@ -379,20 +418,19 @@ public class MainActivity extends Activity
           {
                this.finish();
           }
-          else if (requestCode == PreferenceFacade.MENU_SETTINGS)
+          else if (requestCode == SettingsFacade.MENU_SETTINGS)
           {
                //PreferenceFacade.loadPrefs(this, getApplicationContext());
           }
-          else if (requestCode == PreferenceFacade.MENU_ROM_SELECT)
+          else if (requestCode == SettingsFacade.MENU_ROM_SELECT)
           {
                String romFile=data.getStringExtra(FileChooser.PAYLOAD_FILENAME);
                if (romFile != null)
                {                 
-            	   PreferenceFacade.loadPrefs(this, getApplicationContext());
                     if (Emulator.loadRom(romFile) == 0)
                     {
                          // AutoLoad
-                         PreferenceFacade.DoAutoLoad(getApplicationContext());
+                         SettingsFacade.DoAutoLoad();
                          
                          spawnEmulatorActivity();
                     }
